@@ -56,30 +56,19 @@ RotaryEncoder encoder(ckEncoder, dtEncoder);
 // Variavel para o botao do encoder
 int valor = 0;
 int newPos = 0;
-// Setup a new OneButton on pin A1.
+int pos=0;
+// Setup a new OneButton on pin A1 for SW encoder.
 OneButton button1(A1, true);
 
 extern MenuItem *settingsMenu[];
-
-// Create your charset
-char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
-// Active index of the charset
-uint8_t charsetPosition;
-char Voltas[10] = "1";
-char Tensao[10] = "5.00";
-
-struct Config
-{
-  char voltas[10];
-  char calibracao[10];
-};
-Config config;
-
 // Declare the call back function
 void inputCallbackVoltas(char *value);
 void inputCallbackTensao(char *value);
 void menu_back(void);
-
+// Create your charset
+char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
+// Active index of the charset
+uint8_t charsetPosition;
 // Initialize the main menu items
 MAIN_MENU(
     ITEM_BASIC("Medidor Input"),
@@ -94,7 +83,16 @@ SUB_MENU(settingsMenu, mainMenu,
 // Construct the LcdMenu
 LcdMenu menu(LCD_ROWS, LCD_COLS);
 
+struct Config
+{
+  char voltas[10];
+  char calibracao[10];
+};
+Config config;
 StringStream stream;
+
+char Voltas[10] = "1";
+char Tensao[10] = "5.00";
 
 void init_LCD(void)
 {
@@ -196,48 +194,25 @@ void monitora_teclado()
 
 void read_encoder()
 {
-  // //Verifica se o botao do encoder foi pressionado
-  // valor = digitalRead(swEncoder);
-  // if (valor != 1)
-  // {
-  //   Serial.println("Botao pressionado");
-  //   while (digitalRead(swEncoder) == 0)
-  //     delay(10);
-  // }
-  // //Le as informacoes do encoder
-  // static int pos = 0;
   encoder.tick();
-  // int newPos = encoder.getPosition();
-  // //Se a posicao foi alterada, mostra o valor
-  // //no Serial Monitor
-  // if (pos != newPos) {
-  //   Serial.print(newPos);
-  //   Serial.println();
-  //   pos = newPos;
-  // }
-
-  if (encoder.getDirection() == RotaryEncoder::Direction::CLOCKWISE)
+  int newPos = encoder.getPosition();
+  if(newPos>pos)
   {
     if (menu.isInEditMode()) // Update the position only in edit mode
       charsetPosition =
           constrain(charsetPosition - 1, 0, CHARSET_SIZE);
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.down();
+    pos=newPos;
   }
-  if (encoder.getDirection() == RotaryEncoder::Direction::COUNTERCLOCKWISE)
+  if(newPos<pos)
   {
     if (menu.isInEditMode()) // Update the position only in edit mode
       charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.up();
+    pos=newPos;
   }
-  // if (digitalRead(swEncoder) == LOW)
-  // {
-  //   while (digitalRead(swEncoder) == LOW)
-  //     delay(10);
-  //   menu.type(charset[charsetPosition]); // Works only in edit mode
-  //   menu.enter();
-  // }
 }
 
 // ----- button 1 callback functions
@@ -247,18 +222,21 @@ void click1()
 {
   menu.type(charset[charsetPosition]); // Works only in edit mode
   menu.enter();
+  Serial.println("Button 1 click...");
 } // click1
 
 // This function will be called when the button1 was pressed 2 times in a short timeframe.
 void doubleclick1()
 {
   menu.back();
+  Serial.println("Button 1 doubleclick...");
 } // doubleclick1
 
 // This function will be called once, when the button1 is pressed for a long time.
 void longPressStart1()
 {
   menu.backspace();
+  Serial.println("Button 1 longPressStart1...");
 } // longPressStart1
 
 // This function will be called often, while the button1 is pressed for a long time.
@@ -273,6 +251,11 @@ void longPressStop1()
   Serial.println("Button 1 longPress stop");
 } // longPressStop1
 
+void multiclick()
+{
+  Serial.println("Button 1 multiclick");
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -286,15 +269,17 @@ void setup()
   button1.attachLongPressStart(longPressStart1);
   button1.attachLongPressStop(longPressStop1);
   button1.attachDuringLongPress(longPress1);
+  button1.attachMultiClick(multiclick);
 }
 
 void loop()
 {
   monitora_teclado();
   read_encoder();
+  button1.tick();
 }
 
-void menu_back(void)
+void menu_back()
 {
   menu.back();
 }
