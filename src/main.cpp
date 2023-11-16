@@ -40,6 +40,7 @@ THE SOFTWARE.
 #define swEncoder 7
 #define ckEncoder A2
 #define dtEncoder A3
+#define sensor 2
 
 // Configure keyboard keys (ASCII)
 #define UP 56       // NUMPAD 8
@@ -59,6 +60,14 @@ int newPos = 0;
 int pos=0;
 // Setup a new OneButton on pin A1 for SW encoder.
 OneButton button1(A1, true);
+
+struct Config
+{
+  char voltas[10];
+  char calibracao[10];
+};
+Config config;
+StringStream stream;
 
 extern MenuItem *settingsMenu[];
 // Declare the call back function
@@ -83,16 +92,15 @@ SUB_MENU(settingsMenu, mainMenu,
 // Construct the LcdMenu
 LcdMenu menu(LCD_ROWS, LCD_COLS);
 
-struct Config
-{
-  char voltas[10];
-  char calibracao[10];
-};
-Config config;
-StringStream stream;
-
 char Voltas[10] = "1";
 char Tensao[10] = "5.00";
+
+unsigned long int start_time=0;
+unsigned long int interrupt_time=0;
+unsigned long int elapsed_time=0;
+int volta_atual=0;
+int volta_configurada=1;
+void count_time(void);
 
 void init_LCD(void)
 {
@@ -270,6 +278,8 @@ void setup()
   button1.attachLongPressStop(longPressStop1);
   button1.attachDuringLongPress(longPress1);
   button1.attachMultiClick(multiclick);
+
+  attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
 }
 
 void loop()
@@ -302,4 +312,25 @@ void inputCallbackTensao(char *value)
   Serial.println(config.voltas);
   Serial.println(config.calibracao);
   save_configuration();
+}
+
+void count_time(void)
+{
+  interrupt_time=millis();
+  volta_atual++;
+
+  if(volta_atual==1)
+  {
+    start_time=interrupt_time;
+  }
+
+  if(volta_atual==(volta_configurada+1))
+  {
+    elapsed_time=interrupt_time-start_time;
+    volta_atual=1;
+    char msg_time_elapsed[50];
+    sprintf(msg_time_elapsed,"Tempo decorrido: %lul",elapsed_time);
+    Serial.println(msg_time_elapsed);
+  }
+
 }
