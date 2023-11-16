@@ -329,7 +329,7 @@ void count_time(void)
     elapsed_time=interrupt_time-start_time;
     volta_atual=1;
     char msg_time_elapsed[50];
-    sprintf(msg_time_elapsed,"Tempo decorrido: %lul",elapsed_time);
+    sprintf(msg_time_elapsed,"Tempo decorrido: %lul ms",elapsed_time);
     Serial.println(msg_time_elapsed);
   }
 
