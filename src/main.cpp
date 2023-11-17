@@ -42,6 +42,9 @@ THE SOFTWARE.
 #define ckEncoder A2
 #define dtEncoder A3
 #define sensor 2
+#define PWM_RESOLUTION 10
+#define PWMSEC 9
+#define PWMMILI 10
 
 // Configure keyboard keys (ASCII)
 #define UP 56       // NUMPAD 8
@@ -58,7 +61,7 @@ RotaryEncoder encoder(ckEncoder, dtEncoder);
 // Variavel para o botao do encoder
 int valor = 0;
 int newPos = 0;
-int pos=0;
+int pos = 0;
 // Setup a new OneButton on pin A1 for SW encoder.
 OneButton button1(A1, true);
 
@@ -96,12 +99,13 @@ LcdMenu menu(LCD_ROWS, LCD_COLS);
 char Voltas[10] = "1";
 char Tensao[10] = "5.00";
 
-unsigned long int start_time=0;
-unsigned long int interrupt_time=0;
-unsigned long int elapsed_time=0;
-int volta_atual=0;
-int volta_configurada=1;
+unsigned long int start_time = 0;
+unsigned long int interrupt_time = 0;
+unsigned long int elapsed_time = 0;
+int volta_atual = 0;
+int volta_configurada = 1;
 void count_time(void);
+void time_to_pwm(unsigned long int time);
 
 void init_LCD(void)
 {
@@ -205,22 +209,22 @@ void read_encoder()
 {
   encoder.tick();
   int newPos = encoder.getPosition();
-  if(newPos>pos)
+  if (newPos > pos)
   {
     if (menu.isInEditMode()) // Update the position only in edit mode
       charsetPosition =
           constrain(charsetPosition - 1, 0, CHARSET_SIZE);
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.down();
-    pos=newPos;
+    pos = newPos;
   }
-  if(newPos<pos)
+  if (newPos < pos)
   {
     if (menu.isInEditMode()) // Update the position only in edit mode
       charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.up();
-    pos=newPos;
+    pos = newPos;
   }
 }
 
@@ -265,32 +269,6 @@ void multiclick()
   Serial.println("Button 1 multiclick");
 }
 
-void setup()
-{
-  Serial.begin(115200);
-  init_LCD();
-  load_configuration();
-  pinMode(swEncoder, INPUT);
-
-  // link the button 1 functions.
-  button1.attachClick(click1);
-  button1.attachDoubleClick(doubleclick1);
-  button1.attachLongPressStart(longPressStart1);
-  button1.attachLongPressStop(longPressStop1);
-  button1.attachDuringLongPress(longPress1);
-  button1.attachMultiClick(multiclick);
-
-  attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
-  setupPWM16(10);
-}
-
-void loop()
-{
-  monitora_teclado();
-  read_encoder();
-  button1.tick();
-}
-
 void menu_back()
 {
   menu.back();
@@ -318,21 +296,69 @@ void inputCallbackTensao(char *value)
 
 void count_time(void)
 {
-  interrupt_time=millis();
+  interrupt_time = millis();
   volta_atual++;
 
-  if(volta_atual==1)
+  if (volta_atual == 1)
   {
-    start_time=interrupt_time;
+    start_time = interrupt_time;
   }
 
-  if(volta_atual==(volta_configurada+1))
+  if (volta_atual == (volta_configurada + 1))
   {
-    elapsed_time=interrupt_time-start_time;
-    volta_atual=1;
+    elapsed_time = interrupt_time - start_time;
+    volta_atual = 1;
     char msg_time_elapsed[50];
-    sprintf(msg_time_elapsed,"Tempo decorrido: %lul ms",elapsed_time);
+    sprintf(msg_time_elapsed, "Tempo decorrido: %lul ms", elapsed_time);
     Serial.println(msg_time_elapsed);
   }
+}
 
+void time_to_pwm(unsigned long int time)
+{
+  unsigned int seconds;
+  unsigned int remaining_milliseconds;
+  int pwmSec, pwmMili =0;
+
+  // Calcule os segundos
+  seconds = elapsed_time / 1000;
+
+  // Calcule os milissegundos restantes
+  remaining_milliseconds = elapsed_time % 1000;
+
+  pwmSec=seconds;
+  pwmMili=remaining_milliseconds;
+  map(pwmSec,0,9,0,pow(2,PWM_RESOLUTION));
+  map(pwmMili,0,9,0,pow(2,PWM_RESOLUTION));
+
+  analogWrite16(PWMSEC,pwmSec);
+  analogWrite16(PWMMILI,pwmMili);
+  
+}
+
+void setup()
+{
+  Serial.begin(115200);
+  init_LCD();
+  load_configuration();
+  pinMode(swEncoder, INPUT);
+
+  // link the button 1 functions.
+  button1.attachClick(click1);
+  button1.attachDoubleClick(doubleclick1);
+  button1.attachLongPressStart(longPressStart1);
+  button1.attachLongPressStop(longPressStop1);
+  button1.attachDuringLongPress(longPress1);
+  button1.attachMultiClick(multiclick);
+
+  attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
+  setupPWM16(PWM_RESOLUTION);
+}
+
+void loop()
+{
+  monitora_teclado();
+  read_encoder();
+  button1.tick();
+  time_to_pwm(elapsed_time);
 }
