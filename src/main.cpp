@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include <EEPROM.h>
 #include <RotaryEncoder.h>
 #include <OneButton.h>
+#include "pwm16.h"
 
 #define LCD_ROWS 2
 #define LCD_COLS 16
@@ -280,6 +281,7 @@ void setup()
   button1.attachMultiClick(multiclick);
 
   attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
+  setupPWM16(10);
 }
 
 void loop()
