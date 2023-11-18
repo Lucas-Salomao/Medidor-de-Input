@@ -22,7 +22,7 @@ O projeto foi desenvolvido no Visual Studio Code, utilizando a extensão [Platfo
 
 Fazer o download deste repositório, descompactar a pasta e abrir a pasta pelo Visual Studio Code. Assim toda a estrutura do projeto será reconhecida.
 
-<img src="diagrama_bb.png">
+<img src="/imgs/estrutura.png">
 
 Para compilar o projeto basta utilizar o seguinte atalho no teclado: CTRL+ALT+B. É possível também utilizar o atalho clicando no ícone que se encontra no rodapé do Visual Studio Code.
 
