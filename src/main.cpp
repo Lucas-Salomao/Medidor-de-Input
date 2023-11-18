@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include <RotaryEncoder.h>
 #include <OneButton.h>
 #include "pwm16.h"
+#include <MCP4725.h>
 
 #define LCD_ROWS 2
 #define LCD_COLS 16
@@ -106,6 +107,12 @@ int volta_atual = 0;
 int volta_configurada = 1;
 void count_time(void);
 void time_to_pwm(unsigned long int time);
+void time_to_voltage(unsigned long int time);
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
+
+MCP4725 MCPSec(0x63);
+MCP4725 MCPMili(0x64);
+
 
 void init_LCD(void)
 {
@@ -329,11 +336,33 @@ void time_to_pwm(unsigned long int time)
   pwmSec=seconds;
   pwmMili=remaining_milliseconds;
   map(pwmSec,0,9,0,pow(2,PWM_RESOLUTION));
-  map(pwmMili,0,9,0,pow(2,PWM_RESOLUTION));
+  map(pwmMili,0,999,0,pow(2,PWM_RESOLUTION));
 
   analogWrite16(PWMSEC,pwmSec);
   analogWrite16(PWMMILI,pwmMili);
-  
+}
+
+void time_to_voltage(unsigned long int time)
+{
+  unsigned int seconds;
+  unsigned int remaining_milliseconds;
+
+  // Calcule os segundos
+  seconds = elapsed_time / 1000;
+
+  // Calcule os milissegundos restantes
+  remaining_milliseconds = elapsed_time % 1000;
+
+  float voltageSec=mapfloat(seconds,0.0,9.0,0.0,5.0);
+  float voltageMili=mapfloat(remaining_milliseconds,0.0,999.0,0.0,5.0);
+
+  MCPSec.setVoltage(voltageSec);
+  MCPMili.setVoltage(voltageMili);
+}
+
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void setup()
@@ -353,6 +382,8 @@ void setup()
 
   attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
   setupPWM16(PWM_RESOLUTION);
+  MCPSec.begin();
+  MCPMili.begin();
 }
 
 void loop()
@@ -361,4 +392,5 @@ void loop()
   read_encoder();
   button1.tick();
   time_to_pwm(elapsed_time);
+  time_to_voltage(elapsed_time);
 }
