@@ -150,6 +150,11 @@ void load_configuration(void)
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.calibracao, doc["calibracao"], sizeof(config.calibracao));
   }
+
+  String strVoltas=config.voltas;
+  volta_configurada=strVoltas.toInt();
+  Serial.print("Numero de voltas: ");
+  Serial.println(volta_configurada);
 }
 
 void save_configuration()
