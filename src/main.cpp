@@ -100,8 +100,8 @@ LcdMenu menu(LCD_ROWS, LCD_COLS);
 char Voltas[10] = "1";
 char Tensao[10] = "5.00";
 
-unsigned long int start_time = 0;
-unsigned long int interrupt_time = 0;
+unsigned long int current_time = 0;
+unsigned long int last_time = 0;
 unsigned long int elapsed_time = 0;
 int volta_atual = 0;
 int volta_configurada = 1;
@@ -110,10 +110,20 @@ void time_to_pwm(unsigned long int time);
 void time_to_voltage(unsigned long int time);
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
 
+void save_configuration(void);
+void load_configuration(void);
+
+/**
+ * @brief Declaração dos objetos do conversor digital-analógico MCP4725
+ *
+ */
 MCP4725 MCPSec(0x63);
 MCP4725 MCPMili(0x64);
 
-
+/**
+ * @brief Função de inicialização do display LCD e do menu de opções
+ *
+ */
 void init_LCD(void)
 {
   // Initialize LcdMenu with the menu items
@@ -122,6 +132,10 @@ void init_LCD(void)
   charsetPosition = 0;
 }
 
+/**
+ * @brief Função para recuperar as configurações na memória EEPROM interna, através de um arquivo JSON
+ *
+ */
 void load_configuration(void)
 {
   // Allocate a temporary JsonDocument
@@ -131,32 +145,38 @@ void load_configuration(void)
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   DeserializationError error = deserializeJson(doc, eepromStream);
-  for (JsonPair pair : doc.as<JsonObject>())
-  {
-    Serial.print(pair.key().c_str());
-    Serial.print(" = ");
-    Serial.println(pair.value().as<String>().c_str());
-  }
   if (error)
   {
     Serial.println(F("Failed to read file, using default configuration"));
     Serial.println(error.f_str());
     strlcpy(config.voltas, Voltas, sizeof(config.voltas));
     strlcpy(config.calibracao, Tensao, sizeof(config.calibracao));
+    save_configuration();
+    load_configuration();
   }
   else
   {
+    for (JsonPair pair : doc.as<JsonObject>())
+    {
+      Serial.print(pair.key().c_str());
+      Serial.print(" = ");
+      Serial.println(pair.value().as<String>().c_str());
+    }
     Serial.println(F("Successful to read configuration"));
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.calibracao, doc["calibracao"], sizeof(config.calibracao));
   }
 
-  String strVoltas=config.voltas;
-  volta_configurada=strVoltas.toInt();
+  String strVoltas = config.voltas;
+  volta_configurada = strVoltas.toInt();
   Serial.print("Numero de voltas: ");
   Serial.println(volta_configurada);
 }
 
+/**
+ * @brief Função para salvar as configurações na memória EEPROM interna, através de um arquivo JSON
+ *
+ */
 void save_configuration()
 {
   // Allocate a temporary JsonDocument
@@ -172,6 +192,10 @@ void save_configuration()
   serializeJson(doc, eepromStream);
 }
 
+/**
+ * @brief Função de leitura da porta serial e manipulação do menu no LCD
+ *
+ */
 void monitora_teclado()
 {
   if (!Serial.available())
@@ -217,6 +241,10 @@ void monitora_teclado()
   }
 }
 
+/**
+ * @brief Função para leitura do encoder rotativo KY-040 e manipulação do menu no LCD
+ *
+ */
 void read_encoder()
 {
   encoder.tick();
@@ -286,6 +314,11 @@ void menu_back()
   menu.back();
 }
 
+/**
+ * @brief Função que retorna o valor configurado de voltas no menu do LCD
+ *
+ * @param value string que representa o numero de voltas que o dispositivo deve contar
+ */
 void inputCallbackVoltas(char *value)
 {
   strcpy(config.voltas, value);
@@ -296,6 +329,11 @@ void inputCallbackVoltas(char *value)
   save_configuration();
 }
 
+/**
+ * @brief Função que retorna o valor configurado de calibração no menu do LCD
+ *
+ * @param value string que representa o valor de calibração
+ */
 void inputCallbackTensao(char *value)
 {
   strcpy(config.calibracao, value);
@@ -306,31 +344,84 @@ void inputCallbackTensao(char *value)
   save_configuration();
 }
 
+/**
+ * @brief Função para tratar a interrupção ocasionada pelo pulso do sensor óptico. Essa função determina o tempo entre o primeiro pulso e o ultimo pulso configurado, que representa a última volta do ponteiro.
+ *
+ */
 void count_time(void)
 {
-  interrupt_time = millis();
+  // interrupt_time = millis();
+  // char msg_time_elapsed[100];
+  // sprintf(msg_time_elapsed, "Tempo decorrido desde a inicializacao: %lu ms", interrupt_time);
+  // Serial.println(msg_time_elapsed);
+  // Serial.print("Volta atual:");
+  // Serial.println(volta_atual,DEC);
+
+  // if (volta_atual == 1)
+  // {
+  //   start_time = interrupt_time;
+  //   char msg_time_elapsed[100];
+  //   sprintf(msg_time_elapsed, "Tempo inicial: %lu ms", start_time);
+  //   Serial.println(msg_time_elapsed);
+  // }
+
+  // if (volta_atual == 2)
+  // {
+  //   Serial.print("Volta atual:");
+  //   Serial.println(volta_atual,DEC);
+  //   elapsed_time = interrupt_time - start_time;
+  //   volta_atual = 1;
+  //   char msg_time_elapsed[50];
+  //   sprintf(msg_time_elapsed, "Tempo decorrido entre pulsos configurados: %lu ms", elapsed_time);
+  //   Serial.println(msg_time_elapsed);
+  // }
+  // volta_atual++;
+
+  Serial.print("Volta inicio da interrupcao:");
+  Serial.println(volta_atual, DEC);
+  char msg_time[60];
+  // Atualiza o tempo atual
+  current_time = millis();
+  sprintf(msg_time, "Tempo decorrido desde a inicializacao: %lu ms", current_time);
+  Serial.println(msg_time);
+
+  if (last_time == 0)
+  {
+    last_time = current_time;
+  }
+  // Calcula o tempo decorrido desde a última interrupção
+  elapsed_time += current_time - last_time;
+  sprintf(msg_time, "Tempo decorrido entre pulsos: %lu ms", elapsed_time);
+  Serial.println(msg_time);
+
+  // Atualiza o tempo da interrupção anterior
+  last_time = current_time;
+
   volta_atual++;
-
-  if (volta_atual == 1)
+  // Se a quantidade de interrupções for atingida, imprime o tempo acumulado na serial
+  if (volta_atual > volta_configurada)
   {
-    start_time = interrupt_time;
-  }
-
-  if (volta_atual == (volta_configurada + 1))
-  {
-    elapsed_time = interrupt_time - start_time;
+    sprintf(msg_time, "Tempo decorrido total: %lu ms", elapsed_time);
+    Serial.println(msg_time);
+    elapsed_time = 0;
     volta_atual = 1;
-    char msg_time_elapsed[50];
-    sprintf(msg_time_elapsed, "Tempo decorrido: %lul ms", elapsed_time);
-    Serial.println(msg_time_elapsed);
   }
+
+  Serial.print("Volta fim da interrupcao:");
+  Serial.println(volta_atual, DEC);
+  Serial.println("");
 }
 
+/**
+ * @brief Função para converter um tempo em milisegundos para 2 faixas de saída PWM, sendo uma saída para segundos e outra para milisegundos
+ *
+ * @param time tempo em milisegundos a ser convertido em 2 canais PWM
+ */
 void time_to_pwm(unsigned long int time)
 {
   unsigned int seconds;
   unsigned int remaining_milliseconds;
-  int pwmSec, pwmMili =0;
+  int pwmSec, pwmMili = 0;
 
   // Calcule os segundos
   seconds = elapsed_time / 1000;
@@ -338,15 +429,20 @@ void time_to_pwm(unsigned long int time)
   // Calcule os milissegundos restantes
   remaining_milliseconds = elapsed_time % 1000;
 
-  pwmSec=seconds;
-  pwmMili=remaining_milliseconds;
-  map(pwmSec,0,9,0,pow(2,PWM_RESOLUTION));
-  map(pwmMili,0,999,0,pow(2,PWM_RESOLUTION));
+  pwmSec = seconds;
+  pwmMili = remaining_milliseconds;
+  map(pwmSec, 0, 9, 0, pow(2, PWM_RESOLUTION));
+  map(pwmMili, 0, 999, 0, pow(2, PWM_RESOLUTION));
 
-  analogWrite16(PWMSEC,pwmSec);
-  analogWrite16(PWMMILI,pwmMili);
+  analogWrite16(PWMSEC, pwmSec);
+  analogWrite16(PWMMILI, pwmMili);
 }
 
+/**
+ * @brief Função para converter um tempo em milisegundos para 2 faixas de tensão, sendo uma saída para segundos e outra para milisegundos
+ *
+ * @param time tempo em milisegundos a ser convertido em tensão
+ */
 void time_to_voltage(unsigned long int time)
 {
   unsigned int seconds;
@@ -358,18 +454,32 @@ void time_to_voltage(unsigned long int time)
   // Calcule os milissegundos restantes
   remaining_milliseconds = elapsed_time % 1000;
 
-  float voltageSec=mapfloat(seconds,0.0,9.0,0.0,5.0);
-  float voltageMili=mapfloat(remaining_milliseconds,0.0,999.0,0.0,5.0);
+  float voltageSec = mapfloat(seconds, 0.0, 9.0, 0.0, 5.0);
+  float voltageMili = mapfloat(remaining_milliseconds, 0.0, 999.0, 0.0, 5.0);
 
   MCPSec.setVoltage(voltageSec);
   MCPMili.setVoltage(voltageMili);
 }
 
+/**
+ * @brief
+ *
+ * @param x Valor que necessita de adequação de range
+ * @param in_min menor valor de entrada
+ * @param in_max maior valor de entrada
+ * @param out_min menor valor de saída
+ * @param out_max maior valor de saída
+ * @return float retorno do valor mapeado
+ */
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+/**
+ * @brief Função de inicialização e configuração inicial do dispositivo
+ *
+ */
 void setup()
 {
   Serial.begin(115200);
@@ -385,17 +495,24 @@ void setup()
   button1.attachDuringLongPress(longPress1);
   button1.attachMultiClick(multiclick);
 
-  attachInterrupt(digitalPinToInterrupt(sensor), count_time, RISING);
-  setupPWM16(PWM_RESOLUTION);
-  MCPSec.begin();
-  MCPMili.begin();
+  attachInterrupt(digitalPinToInterrupt(sensor), count_time, FALLING);
+  current_time = millis();
+  last_time = 0;
+  elapsed_time = 0;
+  // setupPWM16(PWM_RESOLUTION);
+  // MCPSec.begin();
+  // MCPMili.begin();
 }
 
+/**
+ * @brief Loop principal do programa
+ *
+ */
 void loop()
 {
-  monitora_teclado();
-  read_encoder();
-  button1.tick();
-  time_to_pwm(elapsed_time);
-  time_to_voltage(elapsed_time);
+  // monitora_teclado();
+  // read_encoder();
+  // button1.tick();
+  // time_to_pwm(elapsed_time);
+  // time_to_voltage(elapsed_time);
 }
