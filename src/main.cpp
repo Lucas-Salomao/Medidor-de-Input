@@ -39,13 +39,14 @@ THE SOFTWARE.
 #define LCD_ADDR 0x27
 #define CHARSET_SIZE 11
 #define CONFIG_ADDR 0x00
-#define swEncoder 7
+#define swEncoder 15
 #define ckEncoder A2
 #define dtEncoder A3
 #define sensor 2
 #define PWM_RESOLUTION 10
 #define PWMSEC 9
 #define PWMMILI 10
+#define MAXSEC 720
 
 // Configure keyboard keys (ASCII)
 #define UP 56       // NUMPAD 8
@@ -98,20 +99,23 @@ SUB_MENU(settingsMenu, mainMenu,
 LcdMenu menu(LCD_ROWS, LCD_COLS);
 
 char Voltas[10] = "1";
-char Tensao[10] = "5.00";
+char Calibracao[10] = "5.00";
 
 unsigned long int current_time = 0;
 unsigned long int last_time = 0;
 unsigned long int elapsed_time = 0;
 int volta_atual = 0;
 int volta_configurada = 1;
+float tensao_calibracao = 0.0;
 void count_time(void);
 void time_to_pwm(unsigned long int time);
 void time_to_voltage(unsigned long int time);
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max);
 
+void EEPROM_Clear(void);
 void save_configuration(void);
 void load_configuration(void);
+void (*funcReset)() = 0;
 
 /**
  * @brief Declaração dos objetos do conversor digital-analógico MCP4725
@@ -132,6 +136,23 @@ void init_LCD(void)
   charsetPosition = 0;
 }
 
+void EEPROM_Clear(void)
+{
+  if (digitalRead(swEncoder) == LOW)
+  {
+    pinMode(13, OUTPUT);
+    digitalWrite(13, LOW);
+    for (unsigned int i = 0; i < EEPROM.length(); i++)
+    {
+      EEPROM.write(i, 0);
+    }
+    // turn the LED on when we're done
+    digitalWrite(13, HIGH);
+    delay(500);
+    digitalWrite(13, LOW);
+  }
+}
+
 /**
  * @brief Função para recuperar as configurações na memória EEPROM interna, através de um arquivo JSON
  *
@@ -147,30 +168,27 @@ void load_configuration(void)
   DeserializationError error = deserializeJson(doc, eepromStream);
   if (error)
   {
-    Serial.println(F("Failed to read file, using default configuration"));
+    Serial.println(F("Failed to read file, using default configuration!\n\rError:"));
     Serial.println(error.f_str());
-    strlcpy(config.voltas, Voltas, sizeof(config.voltas));
-    strlcpy(config.calibracao, Tensao, sizeof(config.calibracao));
+    strlcpy(config.voltas, Voltas, sizeof(Voltas));
+    strlcpy(config.calibracao, Calibracao, sizeof(Calibracao));
     save_configuration();
     load_configuration();
   }
   else
   {
-    for (JsonPair pair : doc.as<JsonObject>())
-    {
-      Serial.print(pair.key().c_str());
-      Serial.print(" = ");
-      Serial.println(pair.value().as<String>().c_str());
-    }
-    Serial.println(F("Successful to read configuration"));
+    Serial.println(F("Successful to read configuration!"));
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.calibracao, doc["calibracao"], sizeof(config.calibracao));
+    volta_configurada = int(doc["voltas"]);
+    tensao_calibracao = float(doc["calibracao"]);
+    Serial.print("Voltas configurada: ");
+    // Serial.println(config.voltas);
+    Serial.println(volta_configurada);
+    Serial.print("Tensao configurada: ");
+    // Serial.println(config.calibracao);
+    Serial.println(tensao_calibracao);
   }
-
-  String strVoltas = config.voltas;
-  volta_configurada = strVoltas.toInt();
-  Serial.print("Numero de voltas: ");
-  Serial.println(volta_configurada);
 }
 
 /**
@@ -190,6 +208,7 @@ void save_configuration()
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
+  Serial.println(F("Successful to save configuration!"));
 }
 
 /**
@@ -307,6 +326,7 @@ void longPressStop1()
 void multiclick()
 {
   Serial.println("Button 1 multiclick");
+  funcReset();
 }
 
 void menu_back()
@@ -431,8 +451,13 @@ void time_to_pwm(unsigned long int time)
 
   pwmSec = seconds;
   pwmMili = remaining_milliseconds;
-  map(pwmSec, 0, 9, 0, pow(2, PWM_RESOLUTION));
+  map(pwmSec, 0, MAXSEC, 0, pow(2, PWM_RESOLUTION));
   map(pwmMili, 0, 999, 0, pow(2, PWM_RESOLUTION));
+
+  Serial.print("Tensao segundos:");
+  Serial.println(pwmSec);
+  Serial.print("Tensao milisegundos:");
+  Serial.println(pwmMili);
 
   analogWrite16(PWMSEC, pwmSec);
   analogWrite16(PWMMILI, pwmMili);
@@ -454,8 +479,13 @@ void time_to_voltage(unsigned long int time)
   // Calcule os milissegundos restantes
   remaining_milliseconds = elapsed_time % 1000;
 
-  float voltageSec = mapfloat(seconds, 0.0, 9.0, 0.0, 5.0);
+  float voltageSec = mapfloat(seconds, 0.0, MAXSEC, 0.0, 5.0);
   float voltageMili = mapfloat(remaining_milliseconds, 0.0, 999.0, 0.0, 5.0);
+
+  Serial.print("Tensao segundos:");
+  Serial.println(voltageSec);
+  Serial.print("Tensao milisegundos:");
+  Serial.println(voltageMili);
 
   MCPSec.setVoltage(voltageSec);
   MCPMili.setVoltage(voltageMili);
@@ -484,8 +514,9 @@ void setup()
 {
   Serial.begin(115200);
   init_LCD();
+  //pinMode(swEncoder, INPUT);
+  // EEPROM_Clear();
   load_configuration();
-  pinMode(swEncoder, INPUT);
 
   // link the button 1 functions.
   button1.attachClick(click1);
@@ -499,9 +530,9 @@ void setup()
   current_time = millis();
   last_time = 0;
   elapsed_time = 0;
-  // setupPWM16(PWM_RESOLUTION);
-  // MCPSec.begin();
-  // MCPMili.begin();
+  setupPWM16(PWM_RESOLUTION);
+  MCPSec.begin();
+  MCPMili.begin();
 }
 
 /**
@@ -510,9 +541,9 @@ void setup()
  */
 void loop()
 {
-  // monitora_teclado();
-  // read_encoder();
-  // button1.tick();
+  monitora_teclado();
+  read_encoder();
+  button1.tick();
   // time_to_pwm(elapsed_time);
   // time_to_voltage(elapsed_time);
 }
