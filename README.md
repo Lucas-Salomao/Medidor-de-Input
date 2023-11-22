@@ -14,6 +14,10 @@ Este dispositivo é capaz de medir o tempo entre entre 2 pulsos de um sensor e c
 
 <img src="/imgs/diagrama_bb.png">
 
+## Pinout Arduino Nano
+
+<img src="/imgs/Mapa-de-Pinos-pinout-Arduino-NANO-Original.png">
+
 ## Procedimentos para Compilação e Gravação
 
 O projeto foi desenvolvido no Visual Studio Code, utilizando a extensão [PlatformIO](https://platformio.org/).
