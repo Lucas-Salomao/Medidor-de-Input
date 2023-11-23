@@ -43,8 +43,8 @@ void setupPWM16(int resolution)
              | _BV(WGM11);                        /* mode 14: fast PWM, TOP=ICR1 */
     TCCR1B = _BV(WGM13) | _BV(WGM12) | _BV(CS11); /* prescaler 1 */
     ICR1 = icr;                                   /* TOP counter value (freeing OCR1A*/
-    Serial.print("ICR1:");
-    Serial.println(icr);
+    //Serial.print("ICR1:");
+    //Serial.println(icr);
 }
 
 /* 16-bit version of analogWrite(). Works only on pins 9 and 10. */
