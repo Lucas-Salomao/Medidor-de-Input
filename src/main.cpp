@@ -19,6 +19,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
+Pinagem do Conector M12
+Marrom 2 SINAL 1 MILISEGUNDOS
+Amarelo 1 GND 1
+Vermelho 4 SINAL 2 SEGUNDOS
+Laranja 3 GND 2
+
 */
 
 #include <ItemInput.h>
@@ -548,19 +554,33 @@ void setup()
 void loop()
 {
   //monitora_teclado();
-  read_encoder();
-  button1.tick();
+  //read_encoder();
+  //button1.tick();
   //time_to_pwm(elapsed_time);
-  time_to_voltage(tempo_total);
+  //time_to_voltage(tempo_total);
   //test_pwm();
-  //test_dac();
+  test_dac();
 }
 
 void test_pwm(void)
 {
 
-  analogWrite16(PWMSEC, 0);
+  analogWrite16(PWMSEC, 0); //0V
   analogWrite16(PWMMILI, 0);
+  delay(3000);
+  analogWrite16(PWMSEC, 128); //1,25V
+  analogWrite16(PWMMILI, 128);
+  delay(3000);
+  analogWrite16(PWMSEC, 256); //2,5V
+  analogWrite16(PWMMILI, 256);
+  delay(3000);
+  analogWrite16(PWMSEC, 512); //5V
+  analogWrite16(PWMMILI, 512);
+  delay(3000);
+  analogWrite16(PWMSEC, 1023); //10V
+  analogWrite16(PWMMILI, 1023);
+  delay(3000);
+
 
   // for (int i = 0; i < 1024; i++)
   // {
@@ -572,6 +592,34 @@ void test_pwm(void)
 
 void test_dac(void)
 {
+  MCPMili.setVoltage(0.5);
+  MCPSec.setVoltage(0.5);
+  delay(3000);
+  MCPMili.setVoltage(1.0);
+  MCPSec.setVoltage(1.0);
+  delay(3000);
+  MCPMili.setVoltage(1.5);
+  MCPSec.setVoltage(1.5);
+  delay(3000);
+  MCPMili.setVoltage(2.0);
+  MCPSec.setVoltage(2.0);
+  delay(3000);
   MCPMili.setVoltage(2.5);
   MCPSec.setVoltage(2.5);
+  delay(3000);
+  MCPMili.setVoltage(3.0);
+  MCPSec.setVoltage(3.0);
+  delay(3000);
+  MCPMili.setVoltage(3.5);
+  MCPSec.setVoltage(3.5);
+  delay(3000);
+  MCPMili.setVoltage(4.0);
+  MCPSec.setVoltage(4.0);
+  delay(3000);
+  MCPMili.setVoltage(4.5);
+  MCPSec.setVoltage(4.5);
+  delay(3000);
+  MCPMili.setVoltage(5.0);
+  MCPSec.setVoltage(5.0);
+  delay(3000);
 }
