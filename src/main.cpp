@@ -526,7 +526,8 @@ void setup()
 {
   Serial.begin(115200);
   init_LCD();
-  pinMode(swEncoder, INPUT);
+  pinMode(swEncoder, INPUT_PULLUP);
+  pinMode(sensor, INPUT_PULLUP);
   //EEPROM_Clear();
   load_configuration();
 
@@ -554,32 +555,33 @@ void setup()
 void loop()
 {
   //monitora_teclado();
-  //read_encoder();
-  //button1.tick();
-  //time_to_pwm(elapsed_time);
+  read_encoder();
+  button1.tick();
+  time_to_pwm(tempo_total);
   //time_to_voltage(tempo_total);
   //test_pwm();
-  test_dac();
+  //test_dac();
 }
 
 void test_pwm(void)
 {
 
-  analogWrite16(PWMSEC, 0); //0V
-  analogWrite16(PWMMILI, 0);
-  delay(3000);
-  analogWrite16(PWMSEC, 128); //1,25V
-  analogWrite16(PWMMILI, 128);
-  delay(3000);
-  analogWrite16(PWMSEC, 256); //2,5V
-  analogWrite16(PWMMILI, 256);
-  delay(3000);
-  analogWrite16(PWMSEC, 512); //5V
-  analogWrite16(PWMMILI, 512);
-  delay(3000);
-  analogWrite16(PWMSEC, 1023); //10V
-  analogWrite16(PWMMILI, 1023);
-  delay(3000);
+
+  // analogWrite16(PWMSEC, 0); //0V
+  // analogWrite16(PWMMILI, 0);
+  // delay(3000);
+  // analogWrite16(PWMSEC, 128); //1,25V
+  // analogWrite16(PWMMILI, 128);
+  // delay(3000);
+  // analogWrite16(PWMSEC, 256); //2,5V
+  // analogWrite16(PWMMILI, 256);
+  // delay(3000);
+   analogWrite16(PWMSEC, 512); //5V
+   analogWrite16(PWMMILI, 512);
+   //delay(3000);
+   //analogWrite16(PWMSEC, 1023); //10V
+   //analogWrite16(PWMMILI, 1023);
+   //delay(3000);
 
 
   // for (int i = 0; i < 1024; i++)
