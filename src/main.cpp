@@ -106,6 +106,7 @@ char TempoMax[10] = "600";
 unsigned long int current_time = 0;
 unsigned long int last_time = 0;
 unsigned long int elapsed_time = 0;
+unsigned long int tempo_total=0;
 int volta_atual = 0;
 int volta_configurada = 1;
 float tensao_calibracao = 0.0;
@@ -401,33 +402,6 @@ void inputCallbackTempoMax(char *value)
  */
 void count_time(void)
 {
-  // interrupt_time = millis();
-  // char msg_time_elapsed[100];
-  // sprintf(msg_time_elapsed, "Tempo decorrido desde a inicializacao: %lu ms", interrupt_time);
-  // Serial.println(msg_time_elapsed);
-  // Serial.print("Volta atual:");
-  // Serial.println(volta_atual,DEC);
-
-  // if (volta_atual == 1)
-  // {
-  //   start_time = interrupt_time;
-  //   char msg_time_elapsed[100];
-  //   sprintf(msg_time_elapsed, "Tempo inicial: %lu ms", start_time);
-  //   Serial.println(msg_time_elapsed);
-  // }
-
-  // if (volta_atual == 2)
-  // {
-  //   Serial.print("Volta atual:");
-  //   Serial.println(volta_atual,DEC);
-  //   elapsed_time = interrupt_time - start_time;
-  //   volta_atual = 1;
-  //   char msg_time_elapsed[50];
-  //   sprintf(msg_time_elapsed, "Tempo decorrido entre pulsos configurados: %lu ms", elapsed_time);
-  //   Serial.println(msg_time_elapsed);
-  // }
-  // volta_atual++;
-
   Serial.print("Volta inicio da interrupcao:");
   Serial.println(volta_atual, DEC);
   char msg_time[60];
@@ -454,6 +428,7 @@ void count_time(void)
   {
     sprintf(msg_time, "Tempo decorrido total: %lu ms", elapsed_time);
     Serial.println(msg_time);
+    tempo_total=elapsed_time;
     elapsed_time = 0;
     volta_atual = 1;
   }
