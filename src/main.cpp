@@ -551,7 +551,7 @@ void loop()
   read_encoder();
   button1.tick();
   //time_to_pwm(elapsed_time);
-  time_to_voltage(elapsed_time);
+  time_to_voltage(tempo_total);
   //test_pwm();
   //test_dac();
 }
