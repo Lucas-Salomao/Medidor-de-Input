@@ -46,7 +46,6 @@ THE SOFTWARE.
 #define PWM_RESOLUTION 10
 #define PWMSEC 9
 #define PWMMILI 10
-#define MAXSEC 720
 
 // Configure keyboard keys (ASCII)
 #define UP 56       // NUMPAD 8
@@ -71,6 +70,7 @@ struct Config
 {
   char voltas[10];
   char calibracao[10];
+  char tempoMax[10];
 };
 Config config;
 StringStream stream;
@@ -79,6 +79,7 @@ extern MenuItem *settingsMenu[];
 // Declare the call back function
 void inputCallbackVoltas(char *value);
 void inputCallbackTensao(char *value);
+void inputCallbackTempoMax(char *value);
 void menu_back(void);
 // Create your charset
 char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
@@ -92,7 +93,7 @@ MAIN_MENU(
 SUB_MENU(settingsMenu, mainMenu,
          ITEM_INPUT("Num Voltas", config.voltas, inputCallbackVoltas),
          ITEM_INPUT("Calib.", config.calibracao, inputCallbackTensao),
-         ITEM_BASIC("Media de tempo"),
+         ITEM_INPUT("Tempo Max", config.tempoMax, inputCallbackTempoMax),
          ITEM_COMMAND("Voltar", menu_back));
 
 // Construct the LcdMenu
@@ -100,6 +101,7 @@ LcdMenu menu(LCD_ROWS, LCD_COLS);
 
 char Voltas[10] = "1";
 char Calibracao[10] = "5.00";
+char TempoMax[10] = "600";
 
 unsigned long int current_time = 0;
 unsigned long int last_time = 0;
@@ -107,6 +109,7 @@ unsigned long int elapsed_time = 0;
 int volta_atual = 0;
 int volta_configurada = 1;
 float tensao_calibracao = 0.0;
+int tempo_maximo = 600;
 void count_time(void);
 void time_to_pwm(unsigned long int time);
 void time_to_voltage(unsigned long int time);
@@ -117,12 +120,15 @@ void save_configuration(void);
 void load_configuration(void);
 void (*funcReset)() = 0;
 
+void test_pwm(void);
+void test_dac(void);
+
 /**
  * @brief Declaração dos objetos do conversor digital-analógico MCP4725
  *
  */
-MCP4725 MCPSec(0x63);
-MCP4725 MCPMili(0x64);
+MCP4725 MCPSec(0x61);
+MCP4725 MCPMili(0x60);
 
 /**
  * @brief Função de inicialização do display LCD e do menu de opções
@@ -140,6 +146,7 @@ void EEPROM_Clear(void)
 {
   if (digitalRead(swEncoder) == LOW)
   {
+    Serial.println("Apagando memoria EEPROM");
     pinMode(13, OUTPUT);
     digitalWrite(13, LOW);
     for (unsigned int i = 0; i < EEPROM.length(); i++)
@@ -150,6 +157,7 @@ void EEPROM_Clear(void)
     digitalWrite(13, HIGH);
     delay(500);
     digitalWrite(13, LOW);
+    Serial.println("Memoria EEPROM apagada com sucesso!");
   }
 }
 
@@ -168,10 +176,11 @@ void load_configuration(void)
   DeserializationError error = deserializeJson(doc, eepromStream);
   if (error)
   {
-    Serial.println(F("Failed to read file, using default configuration!\n\rError:"));
+    Serial.print(F("Failed to read file, using default configuration!\n\rError:"));
     Serial.println(error.f_str());
     strlcpy(config.voltas, Voltas, sizeof(Voltas));
     strlcpy(config.calibracao, Calibracao, sizeof(Calibracao));
+    strlcpy(config.tempoMax, TempoMax, sizeof(TempoMax));
     save_configuration();
     load_configuration();
   }
@@ -180,14 +189,16 @@ void load_configuration(void)
     Serial.println(F("Successful to read configuration!"));
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.calibracao, doc["calibracao"], sizeof(config.calibracao));
+    strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     volta_configurada = int(doc["voltas"]);
     tensao_calibracao = float(doc["calibracao"]);
+    tempo_maximo = int(doc["tempoMax"]);
     Serial.print("Voltas configurada: ");
-    // Serial.println(config.voltas);
     Serial.println(volta_configurada);
     Serial.print("Tensao configurada: ");
-    // Serial.println(config.calibracao);
     Serial.println(tensao_calibracao);
+    Serial.print("Tempo maximo configurado: ");
+    Serial.println(tempo_maximo);
   }
 }
 
@@ -205,6 +216,7 @@ void save_configuration()
   // Set the values in the document
   doc["voltas"] = config.voltas;
   doc["calibracao"] = config.calibracao;
+  doc["tempoMax"] = config.tempoMax;
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
@@ -276,6 +288,7 @@ void read_encoder()
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.down();
     pos = newPos;
+    Serial.println(newPos);
   }
   if (newPos < pos)
   {
@@ -284,6 +297,7 @@ void read_encoder()
     menu.drawChar(charset[charsetPosition]); // Works only in edit mode
     menu.up();
     pos = newPos;
+    Serial.println(newPos);
   }
 }
 
@@ -326,7 +340,7 @@ void longPressStop1()
 void multiclick()
 {
   Serial.println("Button 1 multiclick");
-  funcReset();
+  //funcReset();
 }
 
 void menu_back()
@@ -361,6 +375,23 @@ void inputCallbackTensao(char *value)
   Serial.println(value);
   Serial.println(config.voltas);
   Serial.println(config.calibracao);
+  Serial.println(config.tempoMax);
+  save_configuration();
+}
+
+/**
+ * @brief Função que retorna o valor configurado de tempo máximo no menu do LCD
+ *
+ * @param value string que representa o valor de tempo máximo
+ */
+void inputCallbackTempoMax(char *value)
+{
+  strcpy(config.tempoMax, value);
+  Serial.print(F("# "));
+  Serial.println(value);
+  Serial.println(config.voltas);
+  Serial.println(config.calibracao);
+  Serial.println(config.tempoMax);
   save_configuration();
 }
 
@@ -451,7 +482,7 @@ void time_to_pwm(unsigned long int time)
 
   pwmSec = seconds;
   pwmMili = remaining_milliseconds;
-  map(pwmSec, 0, MAXSEC, 0, pow(2, PWM_RESOLUTION));
+  map(pwmSec, 0, tempo_maximo, 0, pow(2, PWM_RESOLUTION));
   map(pwmMili, 0, 999, 0, pow(2, PWM_RESOLUTION));
 
   Serial.print("Tensao segundos:");
@@ -479,7 +510,7 @@ void time_to_voltage(unsigned long int time)
   // Calcule os milissegundos restantes
   remaining_milliseconds = elapsed_time % 1000;
 
-  float voltageSec = mapfloat(seconds, 0.0, MAXSEC, 0.0, 5.0);
+  float voltageSec = mapfloat(seconds, 0.0, tempo_maximo, 0.0, 5.0);
   float voltageMili = mapfloat(remaining_milliseconds, 0.0, 999.0, 0.0, 5.0);
 
   Serial.print("Tensao segundos:");
@@ -514,8 +545,8 @@ void setup()
 {
   Serial.begin(115200);
   init_LCD();
-  //pinMode(swEncoder, INPUT);
-  // EEPROM_Clear();
+  pinMode(swEncoder, INPUT);
+  //EEPROM_Clear();
   load_configuration();
 
   // link the button 1 functions.
@@ -541,9 +572,31 @@ void setup()
  */
 void loop()
 {
-  monitora_teclado();
+  //monitora_teclado();
   read_encoder();
   button1.tick();
-  // time_to_pwm(elapsed_time);
-  // time_to_voltage(elapsed_time);
+  //time_to_pwm(elapsed_time);
+  time_to_voltage(elapsed_time);
+  //test_pwm();
+  //test_dac();
+}
+
+void test_pwm(void)
+{
+
+  analogWrite16(PWMSEC, 0);
+  analogWrite16(PWMMILI, 0);
+
+  // for (int i = 0; i < 1024; i++)
+  // {
+  //   analogWrite16(PWMSEC, i);
+  //   analogWrite16(PWMMILI, i);
+  //   delay(10);
+  // }
+}
+
+void test_dac(void)
+{
+  MCPMili.setVoltage(2.5);
+  MCPSec.setVoltage(2.5);
 }
