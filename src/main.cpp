@@ -328,8 +328,8 @@ void time_to_pwm()
   cli();
   uint16_t pwmSec, pwmMili = 0;
 
-   pwmSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 4095.0);
-   pwmMili = mapeamento(tempo_milisegundos, 0, 999, 0, 4095.0);
+   pwmSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, pow(2, pwm_resolution));
+   pwmMili = mapeamento(tempo_milisegundos, 0, 999, 0, pow(2, pwm_resolution));
 
    //Serial.println(tempo_maximo);
    //Serial.println((pow(2, pwm_resolution)-1));
