@@ -245,7 +245,7 @@ void setup()
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
 
-  setupPWM16(PWM_RESOLUTION);
+  setupPWM16(pwm_resolution);
   MCPSec.begin();
   MCPMili.begin();
 
@@ -371,18 +371,22 @@ void inputCallbackVoltas(char *value)
 {
   strcpy(config.voltas, value);
   save_configuration();
+  volta_configurada=atoi(value);
 }
 
 void inputCallbackTempoMax(char *value)
 {
   strcpy(config.tempoMax, value);
   save_configuration();
+  tempo_maximo=atoi(value);
 }
 
 void inputCallbackPWM(char *value)
 {
   strcpy(config.pwm, value);
   save_configuration();
+  pwm_resolution=atoi(value);
+  setupPWM16(pwm_resolution);
 }
 
 void save_configuration(void)
