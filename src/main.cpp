@@ -128,6 +128,7 @@ void update1(void);
 void update2(void);
 void update3(void);
 void update4(void);
+void update5(void);
 
 double mapeamento(double x, double in_min, double in_max, double out_min, double out_max);
 
@@ -142,8 +143,8 @@ SUB_MENU(settingsMenu, mainMenu,
          ITEM_COMMAND("Apagar Memo", EEPROM_Clear),
          ITEM_COMMAND("Voltar", menu_back));
 SUB_MENU(monitorMenu, mainMenu,
-         //ITEM_BASIC(str_segundos),
-         //ITEM_BASIC(str_milisegundos),
+         // ITEM_BASIC(str_segundos),
+         // ITEM_BASIC(str_milisegundos),
          ITEM_BASIC(str_tensao_segundos),
          ITEM_BASIC(str_tensao_milisegundos),
          ITEM_COMMAND("Voltar", menu_back));
@@ -195,10 +196,11 @@ void count_time(void)
     // time_to_voltage();
     elapsed_time = 0;
     volta_atual = 1;
-    update1();
-    update2();
-    //update3();
-    //update4();
+    //update1();
+    //update2();
+    // update3();
+    // update4();
+    update5();
   }
 
   Serial.print("Volta fim da interrupcao:");
@@ -453,17 +455,17 @@ void update1(void)
   cli();
   String tempstr;
   tempstr.reserve(20);
-  int uint_tensao=0;
-  int prt_inteira=0;
-  int prt_fracionaria=0;
+  int uint_tensao = 0;
+  int prt_inteira = 0;
+  int prt_fracionaria = 0;
 
-  uint_tensao=(uint16_t)(voltageMili*100);
-  //Serial.println(uint_tensao);
-  prt_inteira=uint_tensao/100;
-  prt_fracionaria=uint_tensao%100;
-  tempstr=String("V-MILI:")+String(prt_inteira)+String(",")+String(prt_fracionaria)+String("V");
-  //Serial.println(tempstr);
-  strcpy(str_tensao_milisegundos,tempstr.c_str());
+  uint_tensao = (uint16_t)(voltageMili * 100);
+  // Serial.println(uint_tensao);
+  prt_inteira = uint_tensao / 100;
+  prt_fracionaria = uint_tensao % 100;
+  tempstr = String("V-MILI:") + String(prt_inteira) + String(",") + String(prt_fracionaria) + String("V");
+  // Serial.println(tempstr);
+  strcpy(str_tensao_milisegundos, tempstr.c_str());
 }
 
 void update2(void)
@@ -471,17 +473,17 @@ void update2(void)
   cli();
   String tempstr;
   tempstr.reserve(20);
-  int uint_tensao=0;
-  int prt_inteira=0;
-  int prt_fracionaria=0;
+  int uint_tensao = 0;
+  int prt_inteira = 0;
+  int prt_fracionaria = 0;
 
-  uint_tensao=(uint16_t)(voltageSec*100);
-  //Serial.println(uint_tensao);
-  prt_inteira=uint_tensao/100;
-  prt_fracionaria=uint_tensao%100;
-  tempstr=String("V-SEG:")+String(prt_inteira)+String(",")+String(prt_fracionaria)+String("V");
-  //Serial.println(tempstr);
-  strcpy(str_tensao_segundos,tempstr.c_str());
+  uint_tensao = (uint16_t)(voltageSec * 100);
+  // Serial.println(uint_tensao);
+  prt_inteira = uint_tensao / 100;
+  prt_fracionaria = uint_tensao % 100;
+  tempstr = String("V-SEG:") + String(prt_inteira) + String(",") + String(prt_fracionaria) + String("V");
+  // Serial.println(tempstr);
+  strcpy(str_tensao_segundos, tempstr.c_str());
 }
 
 void update3(void)
@@ -489,9 +491,9 @@ void update3(void)
   cli();
   String tempstr;
   tempstr.reserve(20);
-  tempstr=String("T-SEG:")+String(tempo_segundos)+String("s");
-  //Serial.println(tempstr);
-  strcpy(str_segundos,tempstr.c_str());
+  tempstr = String("T-SEG:") + String(tempo_segundos) + String("s");
+  // Serial.println(tempstr);
+  strcpy(str_segundos, tempstr.c_str());
 }
 
 void update4(void)
@@ -499,13 +501,37 @@ void update4(void)
   cli();
   String tempstr;
   tempstr.reserve(20);
-  tempstr=String("T-MILI:")+String(tempo_milisegundos)+String("ms");
-  //Serial.println(tempstr);
-  strcpy(str_milisegundos,tempstr.c_str());
+  tempstr = String("T-MILI:") + String(tempo_milisegundos) + String("ms");
+  // Serial.println(tempstr);
+  strcpy(str_milisegundos, tempstr.c_str());
 }
 
 double mapeamento(double x, double in_min, double in_max, double out_min, double out_max)
 {
   double result = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
   return (int)(result + 0.5); // arredonda para o número inteiro mais próximo
+}
+
+void update5(void)
+{
+  int num1 = tempo_segundos;
+  String string1 = String(num1);
+  char charBuf1[16];
+  string1.toCharArray(charBuf1, 16);
+
+  int num2 = tempo_milisegundos;
+  String string2 = String(num2);
+  char charBuf2[16];
+  string2.toCharArray(charBuf2, 16);
+
+  float num3=voltageSec;
+  String string3=String(num3);
+  char charBuf3[16];
+  string3.toCharArray(charBuf3,16);
+
+  float num4=voltageMili;
+  String string4=String(num4);
+  char charBuf4[16];
+  string4.toCharArray(charBuf4,16);
+
 }
