@@ -100,10 +100,10 @@ float voltageSec = 0.0;
 float voltageMili = 0.0;
 int pwm_resolution = 16;
 
-char str_segundos[20];
-char str_milisegundos[20];
-char str_tensao_segundos[20];
-char str_tensao_milisegundos[20];
+char str_segundos[16];
+char str_milisegundos[16];
+char str_tensao_segundos[16];
+char str_tensao_milisegundos[16];
 
 void menu_back(void);
 void read_encoder(void);
@@ -143,8 +143,8 @@ SUB_MENU(settingsMenu, mainMenu,
          ITEM_COMMAND("Apagar Memo", EEPROM_Clear),
          ITEM_COMMAND("Voltar", menu_back));
 SUB_MENU(monitorMenu, mainMenu,
-         // ITEM_BASIC(str_segundos),
-         // ITEM_BASIC(str_milisegundos),
+         ITEM_BASIC(str_segundos),
+         ITEM_BASIC(str_milisegundos),
          ITEM_BASIC(str_tensao_segundos),
          ITEM_BASIC(str_tensao_milisegundos),
          ITEM_COMMAND("Voltar", menu_back));
@@ -519,23 +519,37 @@ double mapeamento(double x, double in_min, double in_max, double out_min, double
 void update5(void)
 {
   int num1 = tempo_segundos;
-  String string1 = String(num1);
+  //String string1 = String(num1);
   char charBuf1[16];
-  string1.toCharArray(charBuf1, 16);
+  itoa(num1,charBuf1,10);
+  //string1.toCharArray(charBuf1, 16);
+  Serial.println(charBuf1);
 
   int num2 = tempo_milisegundos;
-  String string2 = String(num2);
+  //String string2 = String(num2);
   char charBuf2[16];
-  string2.toCharArray(charBuf2, 16);
+  itoa(num2,charBuf2,10);
+  //string2.toCharArray(charBuf2, 16);
+  Serial.println(charBuf2);
 
   float num3=voltageSec;
-  String string3=String(num3);
+  //String string3=String(num3);
   char charBuf3[16];
-  string3.toCharArray(charBuf3,16);
+  dtostrf(num3,4,2,charBuf3);
+  //string3.toCharArray(charBuf3,16);
+  Serial.println(charBuf3);
 
   float num4=voltageMili;
-  String string4=String(num4);
+  //String string4=String(num4);
   char charBuf4[16];
-  string4.toCharArray(charBuf4,16);
+  dtostrf(num4,4,2,charBuf4);
+  //string4.toCharArray(charBuf4,16);
+  Serial.println(charBuf4);
+
+  strcpy(str_segundos,charBuf1);
+  strcpy(str_milisegundos,charBuf2);
+  strcpy(str_tensao_segundos,charBuf3);
+  strcpy(str_tensao_milisegundos,charBuf4);
+
 
 }
