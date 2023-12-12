@@ -327,8 +327,8 @@ void time_to_pwm()
   analogWrite16(PWMSEC, pwmSec);
   analogWrite16(PWMMILI, pwmMili);
 
-  voltageSec = (5.0 / pow(2, pwm_resolution)) * (pwmSec * 1.0);
-  voltageMili = (5.0 / pow(2, pwm_resolution)) * (pwmMili * 1.0);
+  voltageSec = (10.0 / pow(2, pwm_resolution)) * (pwmSec * 1.0);
+  voltageMili = (10.0 / pow(2, pwm_resolution)) * (pwmMili * 1.0);
 
   // Serial.println(pwmSec);
   // Serial.println(pwmMili);
@@ -462,7 +462,7 @@ void update1(void)
   prt_inteira=uint_tensao/100;
   prt_fracionaria=uint_tensao%100;
   tempstr=String("V-MILI:")+String(prt_inteira)+String(",")+String(prt_fracionaria)+String("V");
-  Serial.println(tempstr);
+  //Serial.println(tempstr);
   strcpy(str_tensao_milisegundos,tempstr.c_str());
 }
 
@@ -480,7 +480,7 @@ void update2(void)
   prt_inteira=uint_tensao/100;
   prt_fracionaria=uint_tensao%100;
   tempstr=String("V-SEG:")+String(prt_inteira)+String(",")+String(prt_fracionaria)+String("V");
-  Serial.println(tempstr);
+  //Serial.println(tempstr);
   strcpy(str_tensao_segundos,tempstr.c_str());
 }
 
@@ -490,7 +490,7 @@ void update3(void)
   String tempstr;
   tempstr.reserve(20);
   tempstr=String("T-SEG:")+String(tempo_segundos)+String("s");
-  Serial.println(tempstr);
+  //Serial.println(tempstr);
   strcpy(str_segundos,tempstr.c_str());
 }
 
@@ -500,7 +500,7 @@ void update4(void)
   String tempstr;
   tempstr.reserve(20);
   tempstr=String("T-MILI:")+String(tempo_milisegundos)+String("ms");
-  Serial.println(tempstr);
+  //Serial.println(tempstr);
   strcpy(str_milisegundos,tempstr.c_str());
 }
 
