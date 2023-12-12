@@ -1,29 +1,31 @@
-// -----
-// InterruptRotator.ino - Example for the RotaryEncoder library.
-// This class is implemented for use with the Arduino environment.
-//
-// Copyright (c) by Matthias Hertel, http://www.mathertel.de
-// This work is licensed under a BSD 3-Clause License. See http://www.mathertel.de/License.aspx
-// More information on: http://www.mathertel.de/Arduino
-// -----
-// 18.01.2014 created by Matthias Hertel
-// 04.02.2021 conditions and settings added for ESP8266
-// 03.07.2022 avoid ESP8266 compiler warnings.
-// 03.07.2022 encoder instance not static.
-// -----
+/*
+Copyright (c) Lucas Salomao <lucastadeusalomao@gmail.com>
 
-// This example checks the state of the rotary encoder using interrupts and in the loop() function.
-// The current position and direction is printed on output when changed.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-// Hardware setup:
-// Attach a rotary encoder with output pins to
-// * 2 and 3 on Arduino UNO. (supported by attachInterrupt)
-// * A2 and A3 can be used when directly using the ISR interrupts, see comments below.
-// * D5 and D6 on ESP8266 board (e.g. NodeMCU).
-// Swap the pins when direction is detected wrong.
-// The common contact should be attached to ground.
-//
-// Hints for using attachinterrupt see https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+PINAGEM CONECTOR SENSOR M12
+Marrom 2 SINAL 1 MILISEGUNDOS
+Amarelo 1 GND 1
+Vermelho 4 SINAL 2 SEGUNDOS
+Laranja 3 GND 2
+
+*/
 
 #include <Arduino.h>
 #include <RotaryEncoder.h>
