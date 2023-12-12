@@ -130,6 +130,8 @@ void update3(void);
 void update4(void);
 void update5(void);
 
+void test_pwm2(void);
+
 double mapeamento(double x, double in_min, double in_max, double out_min, double out_max);
 
 MAIN_MENU(
@@ -245,11 +247,12 @@ void setup()
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
 
+  load_configuration();
   setupPWM16(pwm_resolution);
   MCPSec.begin();
   MCPMili.begin();
 
-  load_configuration();
+  //load_configuration();
 } // setup()
 
 // Read the current position of the encoder and print out when changed.
@@ -260,6 +263,8 @@ void loop()
   read_encoder();
 
   button.loop();
+
+  //test_pwm2();
 
 } // loop ()
 
@@ -323,9 +328,18 @@ void time_to_pwm()
   cli();
   uint16_t pwmSec, pwmMili = 0;
 
-  pwmSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, pow(2, pwm_resolution));
-  pwmMili = mapeamento(tempo_milisegundos, 0, 999, 0, pow(2, pwm_resolution));
+   pwmSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 4095.0);
+   pwmMili = mapeamento(tempo_milisegundos, 0, 999, 0, 4095.0);
 
+   //Serial.println(tempo_maximo);
+   //Serial.println((pow(2, pwm_resolution)-1));
+   //Serial.println(pwmSec);
+   //Serial.println(pwmMili);
+
+  //pwmSec = (uint16_t)map(tempo_segundos, 0, 999, 0, 4095);
+  //pwmMili = (uint16_t)map(tempo_milisegundos, 0, 999, 0, 4095);
+
+  //setupPWM16(pwm_resolution);
   analogWrite16(PWMSEC, pwmSec);
   analogWrite16(PWMMILI, pwmMili);
 
@@ -552,4 +566,15 @@ void update5(void)
   strcpy(str_tensao_milisegundos,charBuf4);
 
 
+}
+
+void test_pwm2(void)
+{
+  setupPWM16(12);
+  analogWrite16(PWMSEC,2047);
+  analogWrite16(PWMMILI,2047);
+  delay(30000);
+  analogWrite16(PWMSEC,4095);
+  analogWrite16(PWMMILI,4095);
+  delay(30000);
 }
