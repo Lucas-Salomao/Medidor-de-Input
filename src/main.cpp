@@ -575,5 +575,5 @@ void update_display(void)
 
 void rotina_teste(uint16_t isOn)
 {
-  teste = isON;
+  teste = isOn;
 }
