@@ -230,6 +230,12 @@ void setup()
   // register interrupt routine
   // attachInterrupt(digitalPinToInterrupt(PIN_IN1), checkPosition, CHANGE);
   // attachInterrupt(digitalPinToInterrupt(PIN_IN2), checkPosition, CHANGE);
+  pinMode(PIN_IN1,INPUT_PULLUP);
+  pinMode(PIN_IN2,INPUT_PULLUP);
+  noInterrupts();
+  PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
+  PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
+
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), count_time, FALLING);
 
@@ -250,11 +256,12 @@ void setup()
   setupPWM16(pwm_resolution);
   DACSec.begin(0x61);
   DACMili.begin(0x60);
+  interrupts();
 }
 
 void loop()
 {
-  encoder->tick(); // just call tick() to check the state.
+  //encoder->tick(); // just call tick() to check the state.
   read_encoder();
   button.loop();
   //test_dac();
@@ -263,30 +270,30 @@ void loop()
 
 void read_encoder(void)
 {
-  int newPos = encoder->getPosition();
-  // if (pos != newPos)
+  // int newPos = encoder->getPosition();
+  // // if (pos != newPos)
+  // // {
+  // //   Serial.print("pos:");
+  // //   Serial.print(newPos);
+  // //   Serial.print(" dir:");
+  // //   Serial.println((int)(encoder->getDirection()));
+  // // }
+  // if (newPos > pos)
   // {
-  //   Serial.print("pos:");
-  //   Serial.print(newPos);
-  //   Serial.print(" dir:");
-  //   Serial.println((int)(encoder->getDirection()));
+  //   if (menu.isInEditMode()) // Update the position only in edit mode
+  //     charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
+  //   menu.drawChar(charset[charsetPosition]); // Works only in edit mode
+  //   menu.down();
+  //   pos = newPos;
   // }
-  if (newPos > pos)
-  {
-    if (menu.isInEditMode()) // Update the position only in edit mode
-      charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
-    menu.drawChar(charset[charsetPosition]); // Works only in edit mode
-    menu.down();
-    pos = newPos;
-  }
-  if (newPos < pos)
-  {
-    if (menu.isInEditMode()) // Update the position only in edit mode
-      charsetPosition = constrain(charsetPosition - 1, 0, CHARSET_SIZE);
-    menu.drawChar(charset[charsetPosition]); // Works only in edit mode
-    menu.up();
-    pos = newPos;
-  }
+  // if (newPos < pos)
+  // {
+  //   if (menu.isInEditMode()) // Update the position only in edit mode
+  //     charsetPosition = constrain(charsetPosition - 1, 0, CHARSET_SIZE);
+  //   menu.drawChar(charset[charsetPosition]); // Works only in edit mode
+  //   menu.up();
+  //   pos = newPos;
+  // }
 }
 
 void handler(Button2 &btn)
@@ -571,4 +578,9 @@ void update_display(void)
 void rotina_teste(uint16_t isOn)
 {
   teste = isOn;
+}
+
+ISR(PCINT1_vect) {
+  encoder->tick(); // just call tick() to check the state.
+  //Serial.println("enc");
 }
