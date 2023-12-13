@@ -243,24 +243,26 @@ void setup()
   last_time = 0;
   elapsed_time = 0;
 
-  button.begin(BUTTON_PIN);
-  button.setClickHandler(handler);
+  //button.begin(BUTTON_PIN);
+  //button.setClickHandler(handler);
   // button.setLongClickHandler(handler);       // this will only be called upon release
   //button.setLongClickDetectedHandler(handler); // this will only be called upon detection
-  button.setDoubleClickHandler(handler);
-  button.setTripleClickHandler(handler);
+  //button.setDoubleClickHandler(handler);
+  //button.setTripleClickHandler(handler);
 
   load_configuration();
-  // setupPWM16(pwm_resolution);
-  // DACSec.begin(0x61);
-  // DACMili.begin(0x60);
+  setupPWM16(pwm_resolution);
+  DACSec.begin(0x61);
+  DACMili.begin(0x60);
+  DACSec.setVoltage(0,false);
+  DACMili.setVoltage(0,false);
 }
 
 void loop()
 {
   //encoder->tick(); // just call tick() to check the state.
   read_encoder();
-  button.loop();
+  //button.loop();
   //test_dac();
   //test_pwm();
 }
