@@ -166,7 +166,6 @@ void checkPosition(void)
 
 void count_time(void)
 {
-  cli();
   Serial.println("Interrupcao Externa");
 
   Serial.print("Volta inicio da interrupcao:");
@@ -212,9 +211,8 @@ void count_time(void)
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial)
-    ;
-  Serial.println("Iniciando Medidor de Input");
+  while (!Serial);
+  //Serial.println("Iniciando Medidor de Input");
 
   // setup the rotary encoder functionality
 
@@ -230,9 +228,8 @@ void setup()
   // register interrupt routine
   // attachInterrupt(digitalPinToInterrupt(PIN_IN1), checkPosition, CHANGE);
   // attachInterrupt(digitalPinToInterrupt(PIN_IN2), checkPosition, CHANGE);
-  pinMode(PIN_IN1,INPUT_PULLUP);
-  pinMode(PIN_IN2,INPUT_PULLUP);
-  noInterrupts();
+  //pinMode(PIN_IN1,INPUT_PULLUP);
+  //pinMode(PIN_IN2,INPUT_PULLUP);
   PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
   PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
 
@@ -240,6 +237,7 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(2), count_time, FALLING);
 
   menu.setupLcdWithMenu(0x27, mainMenu);
+  charsetPosition = 0;
 
   current_time = millis();
   last_time = 0;
@@ -248,15 +246,14 @@ void setup()
   button.begin(BUTTON_PIN);
   button.setClickHandler(handler);
   // button.setLongClickHandler(handler);       // this will only be called upon release
-  button.setLongClickDetectedHandler(handler); // this will only be called upon detection
+  //button.setLongClickDetectedHandler(handler); // this will only be called upon detection
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
 
   load_configuration();
-  setupPWM16(pwm_resolution);
-  DACSec.begin(0x61);
-  DACMili.begin(0x60);
-  interrupts();
+  // setupPWM16(pwm_resolution);
+  // DACSec.begin(0x61);
+  // DACMili.begin(0x60);
 }
 
 void loop()
@@ -270,30 +267,30 @@ void loop()
 
 void read_encoder(void)
 {
-  // int newPos = encoder->getPosition();
-  // // if (pos != newPos)
-  // // {
-  // //   Serial.print("pos:");
-  // //   Serial.print(newPos);
-  // //   Serial.print(" dir:");
-  // //   Serial.println((int)(encoder->getDirection()));
-  // // }
-  // if (newPos > pos)
+  int newPos = encoder->getPosition();
+  // if (pos != newPos)
   // {
-  //   if (menu.isInEditMode()) // Update the position only in edit mode
-  //     charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
-  //   menu.drawChar(charset[charsetPosition]); // Works only in edit mode
-  //   menu.down();
-  //   pos = newPos;
+  //   Serial.print("pos:");
+  //   Serial.print(newPos);
+  //   Serial.print(" dir:");
+  //   Serial.println((int)(encoder->getDirection()));
   // }
-  // if (newPos < pos)
-  // {
-  //   if (menu.isInEditMode()) // Update the position only in edit mode
-  //     charsetPosition = constrain(charsetPosition - 1, 0, CHARSET_SIZE);
-  //   menu.drawChar(charset[charsetPosition]); // Works only in edit mode
-  //   menu.up();
-  //   pos = newPos;
-  // }
+  if (newPos > pos)
+  {
+    if (menu.isInEditMode()) // Update the position only in edit mode
+      charsetPosition = (charsetPosition + 1) % CHARSET_SIZE;
+    menu.drawChar(charset[charsetPosition]); // Works only in edit mode
+    menu.down();
+    pos = newPos;
+  }
+  if (newPos < pos)
+  {
+    if (menu.isInEditMode()) // Update the position only in edit mode
+      charsetPosition = constrain(charsetPosition - 1, 0, CHARSET_SIZE);
+    menu.drawChar(charset[charsetPosition]); // Works only in edit mode
+    menu.up();
+    pos = newPos;
+  }
 }
 
 void handler(Button2 &btn)
@@ -325,7 +322,6 @@ void handler(Button2 &btn)
 
 void time_to_pwm()
 {
-  cli();
   uint16_t pwmSec, pwmMili = 0;
 
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
@@ -351,8 +347,6 @@ void time_to_pwm()
 
 void time_to_voltage()
 {
-  cli();
-
   // voltageSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 5);
   // voltageMili = mapeamento(tempo_milisegundos, 0, 999, 0, 5);
 
@@ -487,7 +481,6 @@ void EEPROM_Clear(void)
 
 void update1(void)
 {
-  cli();
   String tempstr;
   tempstr.reserve(20);
   int uint_tensao = 0;
@@ -505,7 +498,6 @@ void update1(void)
 
 void update2(void)
 {
-  cli();
   String tempstr;
   tempstr.reserve(20);
   int uint_tensao = 0;
@@ -523,7 +515,6 @@ void update2(void)
 
 void update3(void)
 {
-  cli();
   String tempstr;
   tempstr.reserve(20);
   tempstr = String("T-SEG:") + String(tempo_segundos) + String("s");
@@ -533,7 +524,6 @@ void update3(void)
 
 void update4(void)
 {
-  cli();
   String tempstr;
   tempstr.reserve(20);
   tempstr = String("T-MILI:") + String(tempo_milisegundos) + String("ms");
@@ -582,5 +572,5 @@ void rotina_teste(uint16_t isOn)
 
 ISR(PCINT1_vect) {
   encoder->tick(); // just call tick() to check the state.
-  //Serial.println("enc");
+  //Serial.println(encoder->getPosition());
 }
