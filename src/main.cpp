@@ -107,8 +107,6 @@ char str_tensao_milisegundos[16];
 
 uint16_t teste = 0;
 
-unsigned long millis_test_pwm=millis();
-
 void menu_back(void);
 void read_encoder(void);
 
@@ -199,8 +197,8 @@ void count_time(void)
     tempo_milisegundos = elapsed_time % 1000;
     sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
     Serial.println(msg_time);
-    // time_to_pwm();
-    //  time_to_voltage();
+    time_to_pwm();
+    time_to_voltage();
     elapsed_time = 0;
     volta_atual = 1;
     update_display();
@@ -256,31 +254,11 @@ void setup()
 
 void loop()
 {
-  //encoder->tick(); // just call tick() to check the state.
-  //read_encoder();
-  //button.loop();
-  if(teste==0)
-  {
-    encoder->tick(); // just call tick() to check the state.
-    read_encoder();
-    button.loop();
-    //test_pwm2();
-  }
-  else
-  {
-    test_pwm2();
-  }
-  // if (teste == 0)
-  // {
-  //   encoder->tick(); // just call tick() to check the state.
-  //   read_encoder();
-  //   button.loop();
-  // }
-  // if (teste == 1)
-  // {
-  //   test_pwm2();
-  //   test_dac();
-  // }
+  encoder->tick(); // just call tick() to check the state.
+  read_encoder();
+  button.loop();
+  //test_dac();
+  //test_pwm();
 }
 
 void read_encoder(void)
@@ -387,6 +365,7 @@ void test_pwm(void)
       pwm--;
     analogWrite16(PWMSEC, pwm);
     analogWrite16(PWMMILI, pwm);
+    delay(5000);
   }
 }
 void test_pwm2(void)
@@ -394,14 +373,10 @@ void test_pwm2(void)
   setupPWM16(12);
   analogWrite16(PWMSEC, 2047);
   analogWrite16(PWMMILI, 2047);
-  if((millis() - millis_test_pwm) < 2000){
-    millis_test_pwm = millis();
-  }
+
   analogWrite16(PWMSEC, 4095);
   analogWrite16(PWMMILI, 4095);
-  if((millis() - millis_test_pwm) > 4000){
-    millis_test_pwm = millis();
-  }
+  
 }
 
 void test_dac(void)
@@ -412,6 +387,7 @@ void test_dac(void)
       t--;
     DACMili.setVoltage(t, false);
     DACSec.setVoltage(t, false);
+    delay(5000);
   }
 }
 
@@ -569,22 +545,22 @@ void update_display(void)
   int num1 = tempo_segundos;
   char charBuf1[16];
   itoa(num1, charBuf1, 10);
-  Serial.println(charBuf1);
+  //Serial.println(charBuf1);
 
   int num2 = tempo_milisegundos;
   char charBuf2[16];
   itoa(num2, charBuf2, 10);
-  Serial.println(charBuf2);
+  //Serial.println(charBuf2);
 
   float num3 = voltageSec;
   char charBuf3[16];
   dtostrf(num3, 4, 2, charBuf3);
-  Serial.println(charBuf3);
+  //Serial.println(charBuf3);
 
   float num4 = voltageMili;
   char charBuf4[16];
   dtostrf(num4, 4, 2, charBuf4);
-  Serial.println(charBuf4);
+  //Serial.println(charBuf4);
 
   strcpy(str_segundos, charBuf1);
   strcpy(str_milisegundos, charBuf2);
