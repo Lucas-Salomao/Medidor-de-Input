@@ -107,6 +107,8 @@ char str_tensao_milisegundos[16];
 
 uint16_t teste = 0;
 
+unsigned long millis_test_pwm=millis();
+
 void menu_back(void);
 void read_encoder(void);
 
@@ -254,17 +256,31 @@ void setup()
 
 void loop()
 {
-  if (teste == 0)
+  //encoder->tick(); // just call tick() to check the state.
+  //read_encoder();
+  //button.loop();
+  if(teste==0)
   {
     encoder->tick(); // just call tick() to check the state.
     read_encoder();
     button.loop();
+    //test_pwm2();
   }
-  if (teste == 1)
+  else
   {
     test_pwm2();
-    test_dac();
   }
+  // if (teste == 0)
+  // {
+  //   encoder->tick(); // just call tick() to check the state.
+  //   read_encoder();
+  //   button.loop();
+  // }
+  // if (teste == 1)
+  // {
+  //   test_pwm2();
+  //   test_dac();
+  // }
 }
 
 void read_encoder(void)
@@ -329,8 +345,8 @@ void time_to_pwm()
 
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
   uint16_t fundo_escala = bits - 1;
-  Serial.println(tempo_maximo);
-  Serial.println(fundo_escala);
+  //Serial.println(tempo_maximo);
+  //Serial.println(fundo_escala);
 
   pwmSec = (uint16_t)map(tempo_segundos, 0, tempo_maximo, 0, fundo_escala);
   pwmMili = (uint16_t)map(tempo_milisegundos, 0, 999, 0, fundo_escala);
@@ -364,7 +380,6 @@ void time_to_voltage()
 void test_pwm(void)
 {
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
-  uint16_t fundo_escala = bits - 1;
   setupPWM16(pwm_resolution);
   for (uint16_t pwm = 0; pwm <= bits; pwm = pwm + bits / 8)
   {
@@ -379,10 +394,14 @@ void test_pwm2(void)
   setupPWM16(12);
   analogWrite16(PWMSEC, 2047);
   analogWrite16(PWMMILI, 2047);
-  // delay(30000);
+  if((millis() - millis_test_pwm) < 2000){
+    millis_test_pwm = millis();
+  }
   analogWrite16(PWMSEC, 4095);
   analogWrite16(PWMMILI, 4095);
-  // delay(30000);
+  if((millis() - millis_test_pwm) > 4000){
+    millis_test_pwm = millis();
+  }
 }
 
 void test_dac(void)
