@@ -107,6 +107,11 @@ char str_tensao_milisegundos[16];
 
 uint16_t teste = 0;
 
+unsigned long tempo_atual;
+unsigned long tempo_anterior;
+unsigned long tempo_atraso = 5000;
+uint16_t dac_voltage = 0;
+
 void menu_back(void);
 void read_encoder(void);
 
@@ -166,15 +171,15 @@ void checkPosition(void)
 
 void count_time(void)
 {
-  //Serial.println("Interrupcao Externa");
+  // Serial.println("Interrupcao Externa");
 
-  //Serial.print("Volta inicio da interrupcao:");
-  //Serial.println(volta_atual, DEC);
-  //char msg_time[60];
-  // Atualiza o tempo atual
+  // Serial.print("Volta inicio da interrupcao:");
+  // Serial.println(volta_atual, DEC);
+  // char msg_time[60];
+  //  Atualiza o tempo atual
   current_time = millis();
-  //sprintf(msg_time, "Tempo desde a inicializacao: %lu ms", current_time);
-  //Serial.println(msg_time);
+  // sprintf(msg_time, "Tempo desde a inicializacao: %lu ms", current_time);
+  // Serial.println(msg_time);
 
   if (last_time == 0)
   {
@@ -182,8 +187,8 @@ void count_time(void)
   }
   // Calcula o tempo decorrido desde a última interrupção
   elapsed_time += current_time - last_time;
-  //sprintf(msg_time, "Tempo entre pulsos: %lu ms", elapsed_time);
-  //Serial.println(msg_time);
+  // sprintf(msg_time, "Tempo entre pulsos: %lu ms", elapsed_time);
+  // Serial.println(msg_time);
 
   // Atualiza o tempo da interrupção anterior
   last_time = current_time;
@@ -194,8 +199,8 @@ void count_time(void)
   {
     tempo_segundos = elapsed_time / 1000;
     tempo_milisegundos = elapsed_time % 1000;
-    //sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
-    //Serial.println(msg_time);
+    // sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
+    // Serial.println(msg_time);
     time_to_pwm();
     time_to_voltage();
     elapsed_time = 0;
@@ -203,15 +208,16 @@ void count_time(void)
     update_display();
   }
 
-  //Serial.print("Volta fim da interrupcao:");
-  //Serial.println(volta_atual, DEC);
-  //Serial.println("");
+  // Serial.print("Volta fim da interrupcao:");
+  // Serial.println(volta_atual, DEC);
+  // Serial.println("");
 }
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial);
-  //Serial.println("Iniciando Medidor de Input");
+  while (!Serial)
+    ;
+  // Serial.println("Iniciando Medidor de Input");
 
   // setup the rotary encoder functionality
 
@@ -227,10 +233,10 @@ void setup()
   // register interrupt routine
   // attachInterrupt(digitalPinToInterrupt(PIN_IN1), checkPosition, CHANGE);
   // attachInterrupt(digitalPinToInterrupt(PIN_IN2), checkPosition, CHANGE);
-  //pinMode(PIN_IN1,INPUT_PULLUP);
-  //pinMode(PIN_IN2,INPUT_PULLUP);
-  PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
-  PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
+  // pinMode(PIN_IN1,INPUT_PULLUP);
+  // pinMode(PIN_IN2,INPUT_PULLUP);
+  PCICR |= (1 << PCIE1);                     // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
+  PCMSK1 |= (1 << PCINT10) | (1 << PCINT11); // This enables the interrupt for pin 2 and 3 of Port C.
 
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), count_time, FALLING);
@@ -245,7 +251,7 @@ void setup()
   button.begin(BUTTON_PIN);
   button.setClickHandler(handler);
   // button.setLongClickHandler(handler);       // this will only be called upon release
-  //button.setLongClickDetectedHandler(handler); // this will only be called upon detection
+  // button.setLongClickDetectedHandler(handler); // this will only be called upon detection
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
 
@@ -253,17 +259,24 @@ void setup()
   setupPWM16(pwm_resolution);
   DACSec.begin(0x61);
   DACMili.begin(0x60);
-  DACSec.setVoltage(0,false);
-  DACMili.setVoltage(0,false);
+  DACSec.setVoltage(0, false);
+  DACMili.setVoltage(0, false);
+
+  tempo_atual=millis();
+  tempo_anterior=tempo_atual;
+  dac_voltage=0;
 }
 
 void loop()
 {
-  //encoder->tick(); // just call tick() to check the state.
+  // encoder->tick(); // just call tick() to check the state.
   read_encoder();
   button.loop();
-  //test_dac();
-  //test_pwm();
+  if(teste==1)
+  {
+    test_dac();
+  }
+  // test_pwm();
 }
 
 void read_encoder(void)
@@ -327,8 +340,8 @@ void time_to_pwm()
 
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
   uint16_t fundo_escala = bits - 1;
-  //Serial.println(tempo_maximo);
-  //Serial.println(fundo_escala);
+  // Serial.println(tempo_maximo);
+  // Serial.println(fundo_escala);
 
   pwmSec = (uint16_t)map(tempo_segundos, 0, tempo_maximo, 0, fundo_escala);
   pwmMili = (uint16_t)map(tempo_milisegundos, 0, 999, 0, fundo_escala);
@@ -378,18 +391,19 @@ void test_pwm2(void)
 
   analogWrite16(PWMSEC, 4095);
   analogWrite16(PWMMILI, 4095);
-  
 }
 
 void test_dac(void)
 {
-  for (uint16_t t = 0; t <= 4096; t = t + (4096 / 8))
+  tempo_atual = millis();
+  if (tempo_atual - tempo_anterior > tempo_atraso)
   {
-    if (t > 0)
-      t--;
-    DACMili.setVoltage(t, false);
-    DACSec.setVoltage(t, false);
-    delay(5000);
+    if (dac_voltage > 4095)
+      dac_voltage = 0;
+    DACMili.setVoltage(dac_voltage, false);
+    DACSec.setVoltage(dac_voltage, false);
+    dac_voltage = (dac_voltage + 512) - 1;
+    tempo_anterior = tempo_atual;
   }
 }
 
@@ -543,22 +557,22 @@ void update_display(void)
   int num1 = tempo_segundos;
   char charBuf1[16];
   itoa(num1, charBuf1, 10);
-  //Serial.println(charBuf1);
+  // Serial.println(charBuf1);
 
   int num2 = tempo_milisegundos;
   char charBuf2[16];
   itoa(num2, charBuf2, 10);
-  //Serial.println(charBuf2);
+  // Serial.println(charBuf2);
 
   float num3 = voltageSec;
   char charBuf3[16];
   dtostrf(num3, 4, 2, charBuf3);
-  //Serial.println(charBuf3);
+  // Serial.println(charBuf3);
 
   float num4 = voltageMili;
   char charBuf4[16];
   dtostrf(num4, 4, 2, charBuf4);
-  //Serial.println(charBuf4);
+  // Serial.println(charBuf4);
 
   strcpy(str_segundos, charBuf1);
   strcpy(str_milisegundos, charBuf2);
@@ -571,7 +585,8 @@ void rotina_teste(uint16_t isOn)
   teste = isOn;
 }
 
-ISR(PCINT1_vect) {
+ISR(PCINT1_vect)
+{
   encoder->tick(); // just call tick() to check the state.
-  //Serial.println(encoder->getPosition());
+  // Serial.println(encoder->getPosition());
 }
