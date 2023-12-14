@@ -138,7 +138,6 @@ void EEPROM_Clear(void);
 void update_display(void);
 
 void test_pwm(void);
-void test_pwm2(void);
 void test_dac(void);
 
 void rotina_teste(uint16_t isOn);
@@ -394,15 +393,6 @@ void test_pwm(void)
     pwm_bits = (pwm_bits + bits/8) - 1;
     tempo_anterior_pwm = tempo_atual_pwm;
   }
-}
-void test_pwm2(void)
-{
-  setupPWM16(12);
-  analogWrite16(PWMSEC, 2047);
-  analogWrite16(PWMMILI, 2047);
-
-  analogWrite16(PWMSEC, 4095);
-  analogWrite16(PWMMILI, 4095);
 }
 
 void test_dac(void)
