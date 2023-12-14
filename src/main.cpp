@@ -388,8 +388,8 @@ void test_pwm(void)
   {
     if (pwm_bits > bits-1)
       pwm_bits = 0;
-      analogWrite16(PWMSEC,pwm_bits);
-      analogWrite16(PWMMILI,pwm_bits);
+    analogWrite16(PWMSEC,pwm_bits);
+    analogWrite16(PWMMILI,pwm_bits);
     pwm_bits = (pwm_bits + bits/8) - 1;
     tempo_anterior_pwm = tempo_atual_pwm;
   }
