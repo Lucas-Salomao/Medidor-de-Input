@@ -107,10 +107,14 @@ char str_tensao_milisegundos[16];
 
 uint16_t teste = 0;
 
-unsigned long tempo_atual;
-unsigned long tempo_anterior;
-unsigned long tempo_atraso = 5000;
+unsigned long tempo_atual_dac;
+unsigned long tempo_anterior_dac;
+unsigned long tempo_atraso_teste = 5000;
 uint16_t dac_voltage = 0;
+
+unsigned long tempo_atual_pwm;
+unsigned long tempo_anterior_pwm;
+uint16_t pwm_bits = 0;
 
 void menu_back(void);
 void read_encoder(void);
@@ -265,9 +269,12 @@ void setup()
   DACSec.setVoltage(0, false);
   DACMili.setVoltage(0, false);
 
-  tempo_atual = millis();
-  tempo_anterior = tempo_atual;
+  tempo_atual_dac = millis();
+  tempo_anterior_dac = tempo_atual_dac;
   dac_voltage = 0;
+  tempo_atual_pwm=millis();
+  tempo_anterior_pwm=tempo_anterior_pwm;
+  pwm_bits=0;
 }
 
 void loop()
@@ -278,8 +285,9 @@ void loop()
   if (teste == 1)
   {
     test_dac();
+    test_pwm();
   }
-  // test_pwm();
+  
 }
 
 void read_encoder(void)
@@ -376,14 +384,15 @@ void time_to_voltage()
 void test_pwm(void)
 {
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
-  setupPWM16(pwm_resolution);
-  for (uint16_t pwm = 0; pwm <= bits; pwm = pwm + bits / 8)
+  tempo_atual_pwm = millis();
+  if (tempo_atual_pwm - tempo_anterior_pwm > tempo_atraso_teste)
   {
-    if (pwm > 0)
-      pwm--;
-    analogWrite16(PWMSEC, pwm);
-    analogWrite16(PWMMILI, pwm);
-    delay(5000);
+    if (pwm_bits > bits-1)
+      pwm_bits = 0;
+      analogWrite16(PWMSEC,pwm_bits);
+      analogWrite16(PWMMILI,pwm_bits);
+    pwm_bits = (pwm_bits + bits/8) - 1;
+    tempo_anterior_pwm = tempo_atual_pwm;
   }
 }
 void test_pwm2(void)
@@ -398,15 +407,15 @@ void test_pwm2(void)
 
 void test_dac(void)
 {
-  tempo_atual = millis();
-  if (tempo_atual - tempo_anterior > tempo_atraso)
+  tempo_atual_dac = millis();
+  if (tempo_atual_dac - tempo_anterior_dac > tempo_atraso_teste)
   {
     if (dac_voltage > 4095)
       dac_voltage = 0;
     DACMili.setVoltage(dac_voltage, false);
     DACSec.setVoltage(dac_voltage, false);
     dac_voltage = (dac_voltage + 512) - 1;
-    tempo_anterior = tempo_atual;
+    tempo_anterior_dac = tempo_atual_dac;
   }
 }
 
@@ -430,6 +439,7 @@ void inputCallbackPWM(char *value)
   save_configuration();
   pwm_resolution = atoi(value);
   setupPWM16(pwm_resolution);
+  pwm_bits=0;
 }
 
 void save_configuration(void)
@@ -586,6 +596,11 @@ void update_display(void)
 void rotina_teste(uint16_t isOn)
 {
   teste = isOn;
+  if(isOn==0)
+  {
+    pwm_bits=0;
+    dac_voltage=0;
+  }
 }
 
 ISR(PCINT1_vect)
