@@ -82,6 +82,7 @@ struct Config
   char voltas[3];
   char tempoMax[4];
   char pwm[3];
+  char delay[6];
 };
 Config config;
 char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
@@ -129,6 +130,7 @@ void time_to_voltage();
 void inputCallbackVoltas(char *value);
 void inputCallbackTempoMax(char *value);
 void inputCallbackPWM(char *value);
+void inputCallbackDelay(char *value);
 
 void save_configuration(void);
 void load_configuration(void);
@@ -154,6 +156,7 @@ SUB_MENU(settingsMenu, mainMenu,
          ITEM_INPUT("PWM-Resol", config.pwm, inputCallbackPWM),
          ITEM_COMMAND("Apagar Memo", EEPROM_Clear),
          ITEM_TOGGLE("Teste", "ON", "OFF", rotina_teste),
+         ITEM_INPUT("Delay", config.delay, inputCallbackDelay),
          ITEM_COMMAND("Voltar", menu_back));
 SUB_MENU(monitorMenu, mainMenu,
          ITEM_BASIC(str_segundos),
@@ -221,8 +224,6 @@ void count_time(void)
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial)
-    ;
   // Serial.println("Iniciando Medidor de Input");
 
   // setup the rotary encoder functionality
@@ -432,6 +433,13 @@ void inputCallbackPWM(char *value)
   pwm_bits=0;
 }
 
+void inputCallbackDelay(char *value)
+{
+  strcpy(config.delay,value);
+  save_configuration();
+  tempo_atraso_teste=atoi(value);
+}
+
 void save_configuration(void)
 {
   // Allocate a temporary JsonDocument
@@ -443,6 +451,7 @@ void save_configuration(void)
   doc["voltas"] = config.voltas;
   doc["tempoMax"] = config.tempoMax;
   doc["pwm"] = config.pwm;
+  doc["delay"] = config.delay;
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
@@ -465,6 +474,7 @@ void load_configuration(void)
     strlcpy(config.voltas, "01", sizeof("01"));
     strlcpy(config.tempoMax, "600", sizeof("600"));
     strlcpy(config.pwm, "16", sizeof("16"));
+    strlcpy(config.delay,"5000",sizeof("5000"));
     save_configuration();
     load_configuration();
   }
@@ -474,15 +484,19 @@ void load_configuration(void)
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     strlcpy(config.pwm, doc["pwm"], sizeof(config.pwm));
+    strlcpy(config.delay, doc["delay"],sizeof(config.delay));
     volta_configurada = int(doc["voltas"]);
     pwm_resolution = float(doc["pwm"]);
     tempo_maximo = int(doc["tempoMax"]);
+    tempo_atraso_teste=(unsigned long)(doc["delay"]);
     Serial.print("Voltas configurada: ");
     Serial.println(volta_configurada);
     Serial.print("Resolucao PWM: ");
     Serial.println(pwm_resolution);
     Serial.print("Tempo maximo configurado: ");
     Serial.println(tempo_maximo);
+    Serial.print("Tempo atraso teste: ");
+    Serial.println(tempo_atraso_teste);
   }
 }
 
@@ -494,6 +508,7 @@ void EEPROM_Clear(void)
     EEPROM.write(i, 0);
   }
   Serial.println("Memoria EEPROM apagada com sucesso!");
+  delay(100);
   funcReset();
 }
 
