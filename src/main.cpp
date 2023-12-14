@@ -166,15 +166,15 @@ void checkPosition(void)
 
 void count_time(void)
 {
-  Serial.println("Interrupcao Externa");
+  //Serial.println("Interrupcao Externa");
 
-  Serial.print("Volta inicio da interrupcao:");
-  Serial.println(volta_atual, DEC);
-  char msg_time[60];
+  //Serial.print("Volta inicio da interrupcao:");
+  //Serial.println(volta_atual, DEC);
+  //char msg_time[60];
   // Atualiza o tempo atual
   current_time = millis();
-  sprintf(msg_time, "Tempo desde a inicializacao: %lu ms", current_time);
-  Serial.println(msg_time);
+  //sprintf(msg_time, "Tempo desde a inicializacao: %lu ms", current_time);
+  //Serial.println(msg_time);
 
   if (last_time == 0)
   {
@@ -182,8 +182,8 @@ void count_time(void)
   }
   // Calcula o tempo decorrido desde a última interrupção
   elapsed_time += current_time - last_time;
-  sprintf(msg_time, "Tempo entre pulsos: %lu ms", elapsed_time);
-  Serial.println(msg_time);
+  //sprintf(msg_time, "Tempo entre pulsos: %lu ms", elapsed_time);
+  //Serial.println(msg_time);
 
   // Atualiza o tempo da interrupção anterior
   last_time = current_time;
@@ -194,8 +194,8 @@ void count_time(void)
   {
     tempo_segundos = elapsed_time / 1000;
     tempo_milisegundos = elapsed_time % 1000;
-    sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
-    Serial.println(msg_time);
+    //sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
+    //Serial.println(msg_time);
     time_to_pwm();
     time_to_voltage();
     elapsed_time = 0;
@@ -203,10 +203,9 @@ void count_time(void)
     update_display();
   }
 
-  Serial.print("Volta fim da interrupcao:");
-  Serial.println(volta_atual, DEC);
-  Serial.println("");
-  sei();
+  //Serial.print("Volta fim da interrupcao:");
+  //Serial.println(volta_atual, DEC);
+  //Serial.println("");
 }
 void setup()
 {
