@@ -99,7 +99,7 @@ int tempo_segundos = 0;
 int tempo_milisegundos = 0;
 float voltageSec = 0.0;
 float voltageMili = 0.0;
-int pwm_resolution = 16;
+int pwm_resolution = 11;
 
 char str_segundos[16];
 char str_milisegundos[16];
@@ -272,9 +272,9 @@ void setup()
   tempo_atual_dac = millis();
   tempo_anterior_dac = tempo_atual_dac;
   dac_voltage = 0;
-  tempo_atual_pwm=millis();
-  tempo_anterior_pwm=tempo_anterior_pwm;
-  pwm_bits=0;
+  tempo_atual_pwm = millis();
+  tempo_anterior_pwm = tempo_anterior_pwm;
+  pwm_bits = 0;
 }
 
 void loop()
@@ -287,7 +287,6 @@ void loop()
     test_dac();
     test_pwm();
   }
-  
 }
 
 void read_encoder(void)
@@ -387,11 +386,11 @@ void test_pwm(void)
   tempo_atual_pwm = millis();
   if (tempo_atual_pwm - tempo_anterior_pwm > tempo_atraso_teste)
   {
-    if (pwm_bits > bits-1)
+    if (pwm_bits > bits - 1)
       pwm_bits = 0;
-    analogWrite16(PWMSEC,pwm_bits);
-    analogWrite16(PWMMILI,pwm_bits);
-    pwm_bits = (pwm_bits + bits/8) - 1;
+    analogWrite16(PWMSEC, pwm_bits);
+    analogWrite16(PWMMILI, pwm_bits);
+    pwm_bits = (pwm_bits + bits / 8) - 1;
     tempo_anterior_pwm = tempo_atual_pwm;
   }
 }
@@ -408,6 +407,56 @@ void test_dac(void)
     dac_voltage = (dac_voltage + 512) - 1;
     tempo_anterior_dac = tempo_atual_dac;
   }
+}
+
+void test_output(void)
+{
+  uint16_t bits = (uint16_t)pow(2, pwm_resolution);
+  analogWrite16(PWMSEC, (bits / 8) * 0);
+  analogWrite16(PWMMILI, (bits / 8) * 0);
+  DACMili.setVoltage(0, false);
+  DACSec.setVoltage(0, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 1);
+  analogWrite16(PWMMILI, (bits / 8) * 1);
+  DACMili.setVoltage(511, false);
+  DACSec.setVoltage(511, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 2);
+  analogWrite16(PWMMILI, (bits / 8) * 2);
+  DACMili.setVoltage(1023, false);
+  DACSec.setVoltage(1023, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 3);
+  analogWrite16(PWMMILI, (bits / 8) * 3);
+  DACMili.setVoltage(1535, false);
+  DACSec.setVoltage(1535, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 4);
+  analogWrite16(PWMMILI, (bits / 8) * 4);
+  DACMili.setVoltage(2047, false);
+  DACSec.setVoltage(2047, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 5);
+  analogWrite16(PWMMILI, (bits / 8) * 5);
+  DACMili.setVoltage(2559, false);
+  DACSec.setVoltage(2559, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 6);
+  analogWrite16(PWMMILI, (bits / 8) * 6);
+  DACMili.setVoltage(3071, false);
+  DACSec.setVoltage(3071, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, (bits / 8) * 7);
+  analogWrite16(PWMMILI, (bits / 8) * 7);
+  DACMili.setVoltage(3583, false);
+  DACSec.setVoltage(3583, false);
+  delay(tempo_atraso_teste);
+  analogWrite16(PWMSEC, ((bits / 8) * 8) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 8) - 1);
+  DACMili.setVoltage(4095, false);
+  DACSec.setVoltage(4095, false);
+  delay(tempo_atraso_teste);
 }
 
 void inputCallbackVoltas(char *value)
@@ -430,14 +479,14 @@ void inputCallbackPWM(char *value)
   save_configuration();
   pwm_resolution = atoi(value);
   setupPWM16(pwm_resolution);
-  pwm_bits=0;
+  pwm_bits = 0;
 }
 
 void inputCallbackDelay(char *value)
 {
-  strcpy(config.delay,value);
+  strcpy(config.delay, value);
   save_configuration();
-  tempo_atraso_teste=atoi(value);
+  tempo_atraso_teste = atoi(value);
 }
 
 void save_configuration(void)
@@ -473,8 +522,8 @@ void load_configuration(void)
     Serial.println(error.f_str());
     strlcpy(config.voltas, "01", sizeof("01"));
     strlcpy(config.tempoMax, "600", sizeof("600"));
-    strlcpy(config.pwm, "16", sizeof("16"));
-    strlcpy(config.delay,"5000",sizeof("5000"));
+    strlcpy(config.pwm, "11", sizeof("11"));
+    strlcpy(config.delay, "5000", sizeof("5000"));
     save_configuration();
     load_configuration();
   }
@@ -484,11 +533,11 @@ void load_configuration(void)
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     strlcpy(config.pwm, doc["pwm"], sizeof(config.pwm));
-    strlcpy(config.delay, doc["delay"],sizeof(config.delay));
+    strlcpy(config.delay, doc["delay"], sizeof(config.delay));
     volta_configurada = int(doc["voltas"]);
     pwm_resolution = float(doc["pwm"]);
     tempo_maximo = int(doc["tempoMax"]);
-    tempo_atraso_teste=(unsigned long)(doc["delay"]);
+    tempo_atraso_teste = (unsigned long)(doc["delay"]);
     Serial.print("Voltas configurada: ");
     Serial.println(volta_configurada);
     Serial.print("Resolucao PWM: ");
@@ -601,10 +650,10 @@ void update_display(void)
 void rotina_teste(uint16_t isOn)
 {
   teste = isOn;
-  if(isOn==0)
+  if (isOn == 0)
   {
-    pwm_bits=0;
-    dac_voltage=0;
+    pwm_bits = 0;
+    dac_voltage = 0;
   }
 }
 
