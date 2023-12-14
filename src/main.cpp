@@ -201,8 +201,11 @@ void count_time(void)
     tempo_milisegundos = elapsed_time % 1000;
     // sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
     // Serial.println(msg_time);
-    time_to_pwm();
-    time_to_voltage();
+    if (teste == 0)
+    {
+      time_to_pwm();
+      time_to_voltage();
+    }
     elapsed_time = 0;
     volta_atual = 1;
     update_display();
@@ -262,9 +265,9 @@ void setup()
   DACSec.setVoltage(0, false);
   DACMili.setVoltage(0, false);
 
-  tempo_atual=millis();
-  tempo_anterior=tempo_atual;
-  dac_voltage=0;
+  tempo_atual = millis();
+  tempo_anterior = tempo_atual;
+  dac_voltage = 0;
 }
 
 void loop()
@@ -272,7 +275,7 @@ void loop()
   // encoder->tick(); // just call tick() to check the state.
   read_encoder();
   button.loop();
-  if(teste==1)
+  if (teste == 1)
   {
     test_dac();
   }
