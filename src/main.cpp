@@ -141,6 +141,7 @@ void update_display(void);
 
 void test_pwm(void);
 void test_dac(void);
+void test_output(void);
 
 void rotina_teste(uint16_t isOn);
 
@@ -284,8 +285,7 @@ void loop()
   button.loop();
   if (teste == 1)
   {
-    test_dac();
-    test_pwm();
+    test_output();
   }
 }
 
@@ -417,38 +417,38 @@ void test_output(void)
   DACMili.setVoltage(0, false);
   DACSec.setVoltage(0, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 1);
-  analogWrite16(PWMMILI, (bits / 8) * 1);
+  analogWrite16(PWMSEC, ((bits / 8) * 1) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 1) - 1);
   DACMili.setVoltage(511, false);
   DACSec.setVoltage(511, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 2);
-  analogWrite16(PWMMILI, (bits / 8) * 2);
+  analogWrite16(PWMSEC, ((bits / 8) * 2) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 2) - 1);
   DACMili.setVoltage(1023, false);
   DACSec.setVoltage(1023, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 3);
-  analogWrite16(PWMMILI, (bits / 8) * 3);
+  analogWrite16(PWMSEC, ((bits / 8) * 3) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 3) - 1);
   DACMili.setVoltage(1535, false);
   DACSec.setVoltage(1535, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 4);
-  analogWrite16(PWMMILI, (bits / 8) * 4);
+  analogWrite16(PWMSEC, ((bits / 8) * 4) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 4) - 1);
   DACMili.setVoltage(2047, false);
   DACSec.setVoltage(2047, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 5);
-  analogWrite16(PWMMILI, (bits / 8) * 5);
+  analogWrite16(PWMSEC, ((bits / 8) * 5) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 5) - 1);
   DACMili.setVoltage(2559, false);
   DACSec.setVoltage(2559, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 6);
-  analogWrite16(PWMMILI, (bits / 8) * 6);
+  analogWrite16(PWMSEC, ((bits / 8) * 6) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 6) - 1);
   DACMili.setVoltage(3071, false);
   DACSec.setVoltage(3071, false);
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, (bits / 8) * 7);
-  analogWrite16(PWMMILI, (bits / 8) * 7);
+  analogWrite16(PWMSEC, ((bits / 8) * 7) - 1);
+  analogWrite16(PWMMILI, ((bits / 8) * 7) - 1);
   DACMili.setVoltage(3583, false);
   DACSec.setVoltage(3583, false);
   delay(tempo_atraso_teste);
