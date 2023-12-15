@@ -117,6 +117,8 @@ unsigned long tempo_atual_pwm;
 unsigned long tempo_anterior_pwm;
 uint16_t pwm_bits = 0;
 
+int atualiza_tensao=0;
+
 void menu_back(void);
 void read_encoder(void);
 
@@ -178,7 +180,7 @@ void checkPosition(void)
 
 void count_time(void)
 {
-  // Serial.println("Interrupcao Externa");
+   Serial.println("Interrupcao Externa");
 
   // Serial.print("Volta inicio da interrupcao:");
   // Serial.println(volta_atual, DEC);
@@ -211,7 +213,8 @@ void count_time(void)
     if (teste == 0)
     {
       //time_to_pwm();
-      time_to_voltage();
+      //time_to_voltage();
+      atualiza_tensao=1;
     }
     elapsed_time = 0;
     volta_atual = 1;
@@ -291,6 +294,11 @@ void loop()
   if (teste == 1)
   {
     test_output();
+  }
+  if(atualiza_tensao==1)
+  {
+    time_to_voltage();
+    atualiza_tensao=0;
   }
 }
 
@@ -380,10 +388,12 @@ void time_to_voltage()
   // voltageSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 5);
   // voltageMili = mapeamento(tempo_milisegundos, 0, 999, 0, 5);
 
+  Serial.println("Entrei");
   uint16_t t = map(tempo_segundos, 0, tempo_maximo, 0, 4095);
   DACSec.setVoltage(t, false);
   t = map(tempo_milisegundos, 0, 999, 0, 4095);
   DACMili.setVoltage(t, false);
+  Serial.println("Sai");
 }
 
 void test_pwm(void)
