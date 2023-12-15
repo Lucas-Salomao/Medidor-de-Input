@@ -327,6 +327,7 @@ void handler(Button2 &btn)
     break;
   case double_click:
     menu.back();
+    menu.setCursorPosition(0);
     // Serial.print("double ");
     break;
   case triple_click:
