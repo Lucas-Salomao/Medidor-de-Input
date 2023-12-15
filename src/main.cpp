@@ -273,8 +273,8 @@ void setup()
 
   load_configuration();
   setupPWM16(pwm_resolution);
-  DACSec.begin(0x61);
-  DACMili.begin(0x60);
+  DACSec.begin(0x60);
+  DACMili.begin(0x61);
   DACSec.setVoltage(0, false);
   DACMili.setVoltage(0, false);
 
