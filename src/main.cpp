@@ -184,7 +184,7 @@ void count_time(void)
 
   // Serial.print("Volta inicio da interrupcao:");
   // Serial.println(volta_atual, DEC);
-  // char msg_time[60];
+  char msg_time[60];
   //  Atualiza o tempo atual
   current_time = millis();
   // sprintf(msg_time, "Tempo desde a inicializacao: %lu ms", current_time);
@@ -208,8 +208,8 @@ void count_time(void)
   {
     tempo_segundos = elapsed_time / 1000;
     tempo_milisegundos = elapsed_time % 1000;
-    // sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
-    // Serial.println(msg_time);
+    sprintf(msg_time, "Tempo total: %lu ms", elapsed_time);
+    Serial.println(msg_time);
     if (teste == 0)
     {
       //time_to_pwm();
@@ -392,8 +392,10 @@ void time_to_voltage()
   Serial.println("Entrei");
   uint16_t t = map(tempo_segundos, 0, tempo_maximo, 0, 4095);
   DACSec.setVoltage(t, false);
+  voltageSec=t*(5.0/4095);
   t = map(tempo_milisegundos, 0, 999, 0, 4095);
   DACMili.setVoltage(t, false);
+  voltageMili=t*(5.0/4095);
   Serial.println("Sai");
 }
 
