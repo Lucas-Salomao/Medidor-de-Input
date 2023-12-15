@@ -210,7 +210,7 @@ void count_time(void)
     // Serial.println(msg_time);
     if (teste == 0)
     {
-      time_to_pwm();
+      //time_to_pwm();
       time_to_voltage();
     }
     elapsed_time = 0;
@@ -248,6 +248,11 @@ void setup()
 
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), count_time, FALLING);
+
+  // lcd->setCursor(5,0);
+  // lcd->print("Rinnai");
+  // lcd->setCursor(0,1);
+  // lcd->print("Medidor de Input");
 
   menu.setupLcdWithMenu(0x27, mainMenu);
   charsetPosition = 0;
