@@ -298,6 +298,7 @@ void loop()
   if(atualiza_tensao==1)
   {
     time_to_voltage();
+    //time_to_pwm();
     atualiza_tensao=0;
   }
 }
