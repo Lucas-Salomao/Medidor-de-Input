@@ -228,7 +228,7 @@ void count_time(void)
 void setup()
 {
   Serial.begin(115200);
-  // Serial.println("Iniciando Medidor de Input");
+  Serial.println("Iniciando Medidor de Input");
 
   // setup the rotary encoder functionality
 
@@ -273,6 +273,8 @@ void setup()
 
   load_configuration();
   setupPWM16(pwm_resolution);
+  analogWrite16(PWMSEC, 0);
+  analogWrite16(PWMMILI, 0);
   DACSec.begin(0x60);
   DACMili.begin(0x61);
   DACSec.setVoltage(0, false);
@@ -298,7 +300,7 @@ void loop()
   if(atualiza_tensao==1)
   {
     time_to_voltage();
-    //time_to_pwm();
+    time_to_pwm();
     atualiza_tensao=0;
   }
 }
@@ -390,10 +392,10 @@ void time_to_voltage()
   // voltageMili = mapeamento(tempo_milisegundos, 0, 999, 0, 5);
 
   Serial.println("Entrei");
-  uint16_t t = map(tempo_segundos, 0, tempo_maximo, 0, 4095);
+  uint16_t t = map(tempo_segundos, 0, tempo_maximo, 50, 4045);
   DACSec.setVoltage(t, false);
   voltageSec=t*(5.0/4095);
-  t = map(tempo_milisegundos, 0, 999, 0, 4095);
+  t = map(tempo_milisegundos, 0, 999, 50, 4045);
   DACMili.setVoltage(t, false);
   voltageMili=t*(5.0/4095);
   Serial.println("Sai");
