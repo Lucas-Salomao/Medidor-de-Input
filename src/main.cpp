@@ -48,6 +48,8 @@ Laranja 3 GND 2
 
 #include <math.h>
 
+#include <Adafruit_ADS1X15.h>
+
 #define PIN_IN1 A2
 #define PIN_IN2 A3
 #define LCD_ROWS 2
@@ -70,6 +72,9 @@ Button2 button;
 
 Adafruit_MCP4725 DACSec;
 Adafruit_MCP4725 DACMili;
+
+Adafruit_ADS1X15 ADS1X15;
+// Adafruit_ADS1115 ADS1X15;
 
 extern MenuItem *settingsMenu[];
 extern MenuItem *monitorMenu[];
@@ -117,7 +122,12 @@ unsigned long tempo_atual_pwm;
 unsigned long tempo_anterior_pwm;
 uint16_t pwm_bits = 0;
 
-int atualiza_tensao=0;
+int atualiza_tensao = 0;
+
+uint16_t adc_sec, adc_mili = 0;
+float tensao_ads_sec, tensao_ads_mili = 0.0;
+int corretor = 0;
+uint16_t precisao_bits_dac = 4;
 
 void menu_back(void);
 void read_encoder(void);
@@ -147,7 +157,10 @@ void test_output(void);
 
 void rotina_teste(uint16_t isOn);
 
-double mapeamento(double x, double in_min, double in_max, double out_min, double out_max);
+long mapeamento(long x, long in_min, long in_max, long out_min, long out_max);
+
+void read_ADS(void);
+void corrige_DAC(void);
 
 MAIN_MENU(
     ITEM_SUBMENU("Monitorar", monitorMenu),
@@ -180,7 +193,7 @@ void checkPosition(void)
 
 void count_time(void)
 {
-   Serial.println("Interrupcao Externa");
+  Serial.println("Interrupcao Externa");
 
   // Serial.print("Volta inicio da interrupcao:");
   // Serial.println(volta_atual, DEC);
@@ -212,9 +225,9 @@ void count_time(void)
     Serial.println(msg_time);
     if (teste == 0)
     {
-      //time_to_pwm();
-      //time_to_voltage();
-      atualiza_tensao=1;
+      // time_to_pwm();
+      // time_to_voltage();
+      atualiza_tensao = 1;
     }
     elapsed_time = 0;
     volta_atual = 1;
@@ -286,6 +299,16 @@ void setup()
   tempo_atual_pwm = millis();
   tempo_anterior_pwm = tempo_anterior_pwm;
   pwm_bits = 0;
+
+  if (!ADS1X15.begin())
+  {
+    Serial.println("Failed to initialize ADS.");
+    while (1)
+      ;
+  }
+  else
+    Serial.println("ADS inicializado!");
+  corretor = 0;
 }
 
 void loop()
@@ -297,11 +320,13 @@ void loop()
   {
     test_output();
   }
-  if(atualiza_tensao==1)
+  if (atualiza_tensao == 1)
   {
-    time_to_voltage();
-    time_to_pwm();
-    atualiza_tensao=0;
+    //time_to_voltage();
+    //read_ADS();
+    //corrige_DAC();
+    //time_to_pwm();
+    atualiza_tensao = 0;
   }
 }
 
@@ -354,6 +379,8 @@ void handler(Button2 &btn)
     menu.backspace();
     // Serial.print("long");
     break;
+  case empty:
+    break;
   }
   // Serial.print("click");
   // Serial.print(" (");
@@ -391,14 +418,14 @@ void time_to_voltage()
   // voltageSec = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 5);
   // voltageMili = mapeamento(tempo_milisegundos, 0, 999, 0, 5);
 
-  Serial.println("Entrei");
-  uint16_t t = map(tempo_segundos, 0, tempo_maximo, 50, 4045);
-  DACSec.setVoltage(t, false);
-  voltageSec=t*(5.0/4095);
-  t = map(tempo_milisegundos, 0, 999, 50, 4045);
-  DACMili.setVoltage(t, false);
-  voltageMili=t*(5.0/4095);
-  Serial.println("Sai");
+  uint16_t t = mapeamento(tempo_segundos, 0, tempo_maximo, 50, 4050);
+  DACSec.setVoltage(t + corretor, false);
+  voltageSec = t * (5.0 / 4096);
+  t = mapeamento(tempo_milisegundos, 0, 999, 50, 4050);
+  DACMili.setVoltage(t + corretor, false);
+  voltageMili = t * (5.0 / 4096);
+  // Serial.println(voltageSec,4);
+  // Serial.println(voltageMili,4);
 }
 
 void test_pwm(void)
@@ -433,50 +460,69 @@ void test_dac(void)
 void test_output(void)
 {
   uint16_t bits = (uint16_t)pow(2, pwm_resolution);
+  tempo_atraso_teste=1000;
+
   analogWrite16(PWMSEC, (bits / 8) * 0);
   analogWrite16(PWMMILI, (bits / 8) * 0);
   DACMili.setVoltage(0, false);
   DACSec.setVoltage(0, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 1) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 1) - 1);
   DACMili.setVoltage(511, false);
   DACSec.setVoltage(511, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 2) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 2) - 1);
   DACMili.setVoltage(1023, false);
   DACSec.setVoltage(1023, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 3) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 3) - 1);
   DACMili.setVoltage(1535, false);
   DACSec.setVoltage(1535, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 4) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 4) - 1);
   DACMili.setVoltage(2047, false);
   DACSec.setVoltage(2047, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 5) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 5) - 1);
   DACMili.setVoltage(2559, false);
   DACSec.setVoltage(2559, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 6) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 6) - 1);
   DACMili.setVoltage(3071, false);
   DACSec.setVoltage(3071, false);
+  read_ADS();
   delay(tempo_atraso_teste);
+
   analogWrite16(PWMSEC, ((bits / 8) * 7) - 1);
   analogWrite16(PWMMILI, ((bits / 8) * 7) - 1);
   DACMili.setVoltage(3583, false);
   DACSec.setVoltage(3583, false);
+  read_ADS();
   delay(tempo_atraso_teste);
-  analogWrite16(PWMSEC, ((bits / 8) * 8) - 1);
-  analogWrite16(PWMMILI, ((bits / 8) * 8) - 1);
+
+  analogWrite16(PWMSEC, ((bits / 8) * 8));
+  analogWrite16(PWMMILI, ((bits / 8) * 8));
   DACMili.setVoltage(4095, false);
   DACSec.setVoltage(4095, false);
+  read_ADS();
   delay(tempo_atraso_teste);
 }
 
@@ -634,10 +680,10 @@ void update4(void)
   strcpy(str_milisegundos, tempstr.c_str());
 }
 
-double mapeamento(double x, double in_min, double in_max, double out_min, double out_max)
+long mapeamento(long x, long in_min, long in_max, long out_min, long out_max)
 {
-  double result = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-  return (int)(result + 0.5); // arredonda para o número inteiro mais próximo
+  float result = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  return round(result); // arredonda para o número inteiro mais próximo
 }
 
 void update_display(void)
@@ -678,8 +724,42 @@ void rotina_teste(uint16_t isOn)
   }
 }
 
+void read_ADS()
+{
+  adc_sec = ADS1X15.readADC_SingleEnded(0);
+  adc_mili = ADS1X15.readADC_SingleEnded(1);
+  tensao_ads_sec = ADS1X15.computeVolts(adc_sec);
+  tensao_ads_mili = ADS1X15.computeVolts(adc_mili);
+  // Serial.println(tensao_ads_sec,4);
+  // Serial.println(tensao_ads_mili,4);
+}
+
+void corrige_DAC()
+{
+  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) > (precisao_bits_dac * (5 / 4096))))
+  {
+    corretor++;
+    atualiza_tensao = 1;
+  }
+  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) <= (precisao_bits_dac * (5 / 4096))))
+  {
+    atualiza_tensao = 0;
+  }
+  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) < (-1 * (precisao_bits_dac * (5 / 4096)))))
+  {
+    corretor--;
+    atualiza_tensao = 1;
+  }
+  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) > (-1 * (precisao_bits_dac * (5 / 4096)))))
+  {
+    atualiza_tensao = 0;
+  }
+}
+
 ISR(PCINT1_vect)
 {
+  cli();
   encoder->tick(); // just call tick() to check the state.
   // Serial.println(encoder->getPosition());
+  sei();
 }
