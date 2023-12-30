@@ -589,7 +589,7 @@ void setup()
   PCMSK1 |= (1 << PCINT10) | (1 << PCINT11); // This enables the interrupt for pin 2 and 3 of Port C.
 
   Serial.println(F("Configurando interrupcao do sensor"));
-  // pinMode(2, INPUT_PULLUP);
+  pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), atualiza_tempo, FALLING);
 
   // lcd->setCursor(5,0);
@@ -643,7 +643,7 @@ void setup()
 void loop()
 {
   count_time();
-  read_encoder();
+  //read_encoder();
   // button.loop();
   // checkPosition();
   if (teste == 1)
