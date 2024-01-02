@@ -355,7 +355,7 @@ void save_configuration(void)
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
-  Serial.println(F("Configuracoes salvas com sucesso"));
+  //Serial.println(F("Configuracoes salvas com sucesso"));
 }
 
 void load_configuration(void)
@@ -369,7 +369,7 @@ void load_configuration(void)
   DeserializationError error = deserializeJson(doc, eepromStream);
   if (error)
   {
-    Serial.print(F("Falha ao ler configuracao da EEPROM, usando configuracoes padrao e recriando o arquivo de configuracao\n\rError:"));
+    //Serial.print(F("Falha ao ler configuracao da EEPROM, usando configuracoes padrao e recriando o arquivo de configuracao\n\rError:"));
     Serial.println(error.f_str());
     strlcpy(config.voltas, "01", sizeof("01"));
     strlcpy(config.tempoMax, "600", sizeof("600"));
@@ -381,7 +381,7 @@ void load_configuration(void)
   }
   else
   {
-    Serial.println(F("Configuracao lida com sucesso da EEPROM"));
+    //Serial.println(F("Configuracao lida com sucesso da EEPROM"));
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     strlcpy(config.pwm, doc["pwm"], sizeof(config.pwm));
@@ -392,16 +392,16 @@ void load_configuration(void)
     tempo_maximo = uint16_t(doc["tempoMax"]);
     tempo_atraso_teste = (unsigned long)(doc["delay"]);
     precisao_bits_dac = uint16_t(doc["precisao"]);
-    Serial.print(F("Voltas: "));
-    Serial.println(volta_configurada);
-    Serial.print(F("Resolucao PWM: "));
-    Serial.println(pwmBits);
-    Serial.print(F("Tempo maximo: "));
-    Serial.println(tempo_maximo);
-    Serial.print(F("Tempo delay teste: "));
-    Serial.println(tempo_atraso_teste);
-    Serial.print(F("Precisao: "));
-    Serial.println(precisao_bits_dac);
+    // Serial.print(F("Voltas: "));
+    // Serial.println(volta_configurada);
+    // Serial.print(F("Resolucao PWM: "));
+    // Serial.println(pwmBits);
+    // Serial.print(F("Tempo maximo: "));
+    // Serial.println(tempo_maximo);
+    // Serial.print(F("Tempo delay teste: "));
+    // Serial.println(tempo_atraso_teste);
+    // Serial.print(F("Precisao: "));
+    // Serial.println(precisao_bits_dac);
   }
 }
 
@@ -425,30 +425,25 @@ long mapeamento(long x, long in_min, long in_max, long out_min, long out_max)
 
 void update_display(void)
 {
-  int num1 = tempo_segundos;
-  char charBuf1[16];
-  itoa(num1, charBuf1, 10);
-  // Serial.println(charBuf1);
+  char tempBuffer[16];
+  int tempNumber=0;
+  float tempFloat=0;
 
-  int num2 = tempo_milisegundos;
-  char charBuf2[16];
-  itoa(num2, charBuf2, 10);
-  // Serial.println(charBuf2);
+  tempNumber=tempo_segundos;
+  itoa(tempNumber,tempBuffer,10);
+  strcpy(str_segundos, tempBuffer);
 
-  float num3 = voltageSec;
-  char charBuf3[16];
-  dtostrf(num3, 4, 2, charBuf3);
-  // Serial.println(charBuf3);
+  tempNumber=tempo_milisegundos;
+  itoa(tempNumber,tempBuffer,10);
+  strcpy(str_milisegundos, tempBuffer);
 
-  float num4 = voltageMili;
-  char charBuf4[16];
-  dtostrf(num4, 4, 2, charBuf4);
-  // Serial.println(charBuf4);
+  tempFloat=voltageSec;
+  dtostrf(tempFloat, 4, 2, tempBuffer);
+  strcpy(str_tensao_segundos, tempBuffer);
 
-  strcpy(str_segundos, charBuf1);
-  strcpy(str_milisegundos, charBuf2);
-  strcpy(str_tensao_segundos, charBuf3);
-  strcpy(str_tensao_milisegundos, charBuf4);
+  tempFloat=voltageMili;
+  dtostrf(tempFloat, 4, 2, tempBuffer);
+  strcpy(str_tensao_milisegundos, tempBuffer);
 }
 
 void rotina_teste(uint16_t isOn)
@@ -535,6 +530,7 @@ void count_time(void)
       elapsed_time = 0;
       volta_atual = 1;
       atualiza_tensao=1;
+      update_display();
     }
   }
   
@@ -554,14 +550,14 @@ checkPosition();
 void setup()
 {
   Serial.begin(1000000);
-  Serial.println(F("*********************************************************"));
+  //Serial.println(F("*********************************************************"));
   Serial.println(F("Iniciando Medidor de Input Rinnai V1.0"));
-  Serial.println(F("Desenvolvido por DK Solutions"));
-  Serial.println(F("Engenheiro Responsavel:Lucas Salomao"));
-  Serial.println(F("Contato:lucastadeusalomao@gmail.com"));
-  Serial.println(F("*********************************************************"));
+  //Serial.println(F("Desenvolvido por DK Solutions"));
+  //Serial.println(F("Engenheiro Responsavel:Lucas Salomao"));
+  //Serial.println(F("Contato:lucastadeusalomao@gmail.com"));
+  //Serial.println(F("*********************************************************"));
 
-  Serial.println(F("Configurando encoder rotativo"));
+  //Serial.println(F("Configurando encoder rotativo"));
   // setup the rotary encoder functionality
 
   // use FOUR3 mode when PIN_IN1, PIN_IN2 signals are always HIGH in latch position.
@@ -581,7 +577,7 @@ void setup()
   PCICR |= (1 << PCIE1);                     // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
   PCMSK1 |= (1 << PCINT10) | (1 << PCINT11); // This enables the interrupt for pin 2 and 3 of Port C.
 
-  Serial.println(F("Configurando interrupcao do sensor"));
+  //Serial.println(F("Configurando interrupcao do sensor"));
   pinMode(2, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(2), atualiza_tempo, FALLING);
 
@@ -590,7 +586,7 @@ void setup()
   // lcd->setCursor(0,1);
   // lcd->print("Medidor de Input");
 
-  Serial.println(F("Configurando LCD"));
+  //Serial.println(F("Configurando LCD"));
   menu.setupLcdWithMenu(0x27, mainMenu);
   charsetPosition = 0;
 
@@ -599,7 +595,7 @@ void setup()
   elapsed_time = 0;
   volta_atual=0;
 
-  Serial.println(F("Configurando botao do encoder"));
+  //Serial.println(F("Configurando botao do encoder"));
   button.begin(BUTTON_PIN);
   button.setClickHandler(handler);
   // button.setLongClickHandler(handler);       // this will only be called upon release
@@ -607,7 +603,7 @@ void setup()
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
 
-  Serial.println(F("Lendo configuracoes na EEPROM"));
+  //Serial.println(F("Lendo configuracoes na EEPROM"));
   load_configuration();
 
   //Serial.println(F("Configurando saida PWM"));
@@ -617,25 +613,25 @@ void setup()
 
   if(!(DACSec.begin(0x60)&DACMili.begin(0x61)))
   {
-    Serial.println(F("Falha ao iniciar DAC"));
+    //Serial.println(F("Falha ao iniciar DAC"));
     funcReset();
   }
   {
-    Serial.println(F("DAC inicializado"));
+    //Serial.println(F("DAC inicializado"));
     DACSec.setVoltage(0, false);
     DACMili.setVoltage(0, false);
   }
 
   if (!ADS1X15.begin())
   {
-    Serial.println(F("Falha ao iniciar ADS"));
+    //Serial.println(F("Falha ao iniciar ADS"));
     funcReset();
   }
   else
   {
     ADS1X15.setGain(GAIN_TWOTHIRDS);
     ADS1X15.setDataRate(RATE_ADS1015_1600SPS);
-    Serial.println(F("ADS inicializado"));
+    //Serial.println(F("ADS inicializado"));
     corretor = 0;
   }
 }
