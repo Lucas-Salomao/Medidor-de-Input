@@ -108,7 +108,7 @@ volatile uint16_t adc_sec, adc_mili = 0;
 volatile float tensao_ads_sec, tensao_ads_mili = 0.0;
 volatile int16_t corretor = 0;
 volatile uint16_t precisao_bits_dac = 1;
-volatile uint16_t erroDAC=30;
+volatile int16_t erroDAC=30;
 
 void (*funcReset)() = 0;
 void menu_back(void);
@@ -129,6 +129,7 @@ void rotina_teste(uint16_t isOn);
 long mapeamento(long x, long in_min, long in_max, long out_min, long out_max);
 void read_ADS(void);
 void corrige_DAC(void);
+void atualiza_tempo(void);
 
 MAIN_MENU(
     ITEM_SUBMENU("Monitorar", monitorMenu),
@@ -210,7 +211,6 @@ void time_to_pwm()
   pwmSec = (uint16_t)mapeamento(tempo_segundos, 0, tempo_maximo, 0, fundo_escala);
   pwmMili = (uint16_t)mapeamento(tempo_milisegundos, 0, 999, 0, fundo_escala);
 
-  // setupPWM16(pwm_resolution);
   analogWrite16(PWMSEC, pwmSec);
   analogWrite16(PWMMILI, pwmMili);
 
@@ -220,26 +220,22 @@ void time_to_pwm()
 
 void time_to_voltage()
 {
-  char str[50];
   uint16_t t = mapeamento(tempo_segundos, 0, tempo_maximo, 50, 4050);
-  DACSec.setVoltage(t + erroDAC+ corretor, false);
+  DACSec.setVoltage(t + erroDAC + corretor, false);
   voltageSec = t * (5.0 / 4096);
   t = mapeamento(tempo_milisegundos, 0, 999, 50, 4050);
-  DACMili.setVoltage(t + erroDAC+ corretor, false);
+  DACMili.setVoltage(t + erroDAC + corretor, false);
   voltageMili = t * (5.0 / 4096);
 
-  //sprintf(str, "DAC-Tensao segundos:%2.4f V", voltageSec);
-  Serial.print("DAC-Tensao segundos:");
+  Serial.print(F("DAC-Tensao segundos:"));
   Serial.println(voltageSec,6);
-  //sprintf(str, "DAC-Tensao segundos:%2.4f V", voltageMili);
-  Serial.print("DAC-Tensao milisegundos:");
+  Serial.print(F("DAC-Tensao milisegundos:"));
   Serial.println(voltageMili,6);
 }
 
 void test_output(void)
 {
   uint16_t resolution = (uint16_t)pow(2, pwmBits);
-  tempo_atraso_teste = 1000;
 
   analogWrite16(PWMSEC, (resolution / 8) * 0);
   analogWrite16(PWMMILI, (resolution / 8) * 0);
@@ -355,7 +351,7 @@ void save_configuration(void)
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
-  Serial.println(F("Successful to save configuration!"));
+  Serial.println(F("Configuracoes salvas com sucesso"));
 }
 
 void load_configuration(void)
@@ -369,7 +365,7 @@ void load_configuration(void)
   DeserializationError error = deserializeJson(doc, eepromStream);
   if (error)
   {
-    Serial.print(F("Failed to read file, using default configuration!\n\rError:"));
+    Serial.print(F("Falha ao ler configuracao da EEPROM, usando configuracoes padrao e recriando o arquivo de configuracao\n\rError:"));
     Serial.println(error.f_str());
     strlcpy(config.voltas, "01", sizeof("01"));
     strlcpy(config.tempoMax, "600", sizeof("600"));
@@ -380,7 +376,7 @@ void load_configuration(void)
   }
   else
   {
-    Serial.println(F("Successful to read configuration!"));
+    Serial.println(F("Configuracao lida com sucesso da EEPROM"));
     strlcpy(config.voltas, doc["voltas"], sizeof(config.voltas));
     strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     strlcpy(config.pwm, doc["pwm"], sizeof(config.pwm));
@@ -389,25 +385,25 @@ void load_configuration(void)
     pwmBits = float(doc["pwm"]);
     tempo_maximo = int(doc["tempoMax"]);
     tempo_atraso_teste = (unsigned long)(doc["delay"]);
-    Serial.print("Voltas configurada: ");
+    Serial.print(F("Voltas: "));
     Serial.println(volta_configurada);
-    Serial.print("Resolucao PWM: ");
+    Serial.print(F("Resolucao PWM: "));
     Serial.println(pwmBits);
-    Serial.print("Tempo maximo configurado: ");
+    Serial.print(F("Tempo maximo: "));
     Serial.println(tempo_maximo);
-    Serial.print("Tempo atraso teste: ");
+    Serial.print(F("Tempo delay teste: "));
     Serial.println(tempo_atraso_teste);
   }
 }
 
 void EEPROM_Clear(void)
 {
-  Serial.println("Apagando memoria EEPROM");
+  Serial.println(F("Apagando memoria EEPROM"));
   for (unsigned int i = 0; i < EEPROM.length(); i++)
   {
     EEPROM.write(i, 0);
   }
-  Serial.println("Memoria EEPROM apagada com sucesso!");
+  Serial.println(F("Memoria EEPROM apagada com sucesso"));
   delay(100);
   funcReset();
 }
@@ -458,17 +454,14 @@ void rotina_teste(uint16_t isOn)
 
 void read_ADS()
 {
-  char str[50];
-  //adc_sec = ADS1X15.readADC_SingleEnded(0);
-  //adc_mili = ADS1X15.readADC_SingleEnded(1);
-  tensao_ads_sec = ADS1X15.computeVolts(ADS1X15.readADC_SingleEnded(0));
-  tensao_ads_mili = ADS1X15.computeVolts(ADS1X15.readADC_SingleEnded(1));
+  adc_sec = ADS1X15.readADC_SingleEnded(0);
+  adc_mili = ADS1X15.readADC_SingleEnded(1);
+  tensao_ads_sec = ADS1X15.computeVolts(adc_sec);
+  tensao_ads_mili = ADS1X15.computeVolts(adc_mili);
 
-  //sprintf(str, "ADC-Tensao segundos:%2.4f V", tensao_ads_sec);
-  Serial.print("ADC-Tensao segundos:");
+  Serial.print(F("ADC-Tensao segundos:"));
   Serial.println(tensao_ads_sec,6);
-  //sprintf(str, "ADC-Tensao milisegundos:%2.4f V", tensao_ads_mili);
-  Serial.print("ADC-Tensao milisegundos:");
+  Serial.print(F("ADC-Tensao milisegundos:"));
   Serial.println(tensao_ads_mili,6);
 }
 
@@ -483,10 +476,7 @@ void corrige_DAC()
   if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) <= (precisao_bits_dac * (6.144 / 4096))))
   {
     atualiza_tensao = 0;
-    Serial.println("Leitua final apos correcao");
-    time_to_voltage();
-    read_ADS();
-    Serial.print("Corretor:");
+    Serial.print(F("Corretor:"));
     Serial.println(corretor);
     Serial.println();
     return;
@@ -500,11 +490,9 @@ void corrige_DAC()
   if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) > (-1 * (precisao_bits_dac * (6.144 / 4096)))))
   {
     atualiza_tensao = 0;
-    Serial.println("Leitura final apos correcao");
-    time_to_voltage();
-    read_ADS();
-    Serial.print("Corretor:");
+    Serial.print(F("Corretor:"));
     Serial.println(corretor);
+    Serial.println();
     return;
   }
 }
@@ -516,13 +504,12 @@ void checkPosition(void)
 
 void count_time(void)
 {
-  if (current_time != last_time)
+  if(current_time!=last_time)
   {
     char msg_time[60];
     if (last_time == 0)
     {
       last_time = current_time;
-      volta_atual=0;
     }
     // Calcula o tempo decorrido desde a última interrupção
     elapsed_time += current_time - last_time;
@@ -536,24 +523,23 @@ void count_time(void)
       tempo_milisegundos = elapsed_time % 1000;
       sprintf(msg_time, "Tempo total decorrido: %lu ms", elapsed_time);
       Serial.println(msg_time);
-      if (teste == 0)
-      {
-        atualiza_tensao = 1;
-      }
       elapsed_time = 0;
       volta_atual = 1;
+      atualiza_tensao=1;
     }
   }
+  
 }
 
 void atualiza_tempo(void)
 {
   current_time = millis();
+  count_time();
 }
 
 ISR(PCINT1_vect)
 {
-  checkPosition();
+checkPosition();
 }
 
 void setup()
@@ -565,15 +551,13 @@ void setup()
   Serial.println(F("Engenheiro Responsavel:Lucas Salomao"));
   Serial.println(F("Contato:lucastadeusalomao@gmail.com"));
   Serial.println(F("*********************************************************"));
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
 
+  Serial.println(F("Configurando encoder rotativo"));
   // setup the rotary encoder functionality
 
   // use FOUR3 mode when PIN_IN1, PIN_IN2 signals are always HIGH in latch position.
   // encoder = new RotaryEncoder(PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::FOUR3);
 
-  Serial.println(F("Configurando encoder rotativo"));
   // use FOUR0 mode when PIN_IN1, PIN_IN2 signals are always LOW in latch position.
   encoder = new RotaryEncoder(PIN_IN1, PIN_IN2, RotaryEncoder::LatchMode::FOUR0);
 
@@ -601,7 +585,12 @@ void setup()
   menu.setupLcdWithMenu(0x27, mainMenu);
   charsetPosition = 0;
 
-  Serial.println(F("Configurando botao"));
+  current_time = 0;
+  last_time = 0;
+  elapsed_time = 0;
+  volta_atual=0;
+
+  Serial.println(F("Configurando botao do encoder"));
   button.begin(BUTTON_PIN);
   button.setClickHandler(handler);
   // button.setLongClickHandler(handler);       // this will only be called upon release
@@ -612,48 +601,54 @@ void setup()
   Serial.println(F("Lendo configuracoes na EEPROM"));
   load_configuration();
 
-  // Serial.println(F("Configurando saida PWM"));
-  // setupPWM16(pwmBits);
-  // analogWrite16(PWMSEC, 0);
-  // analogWrite16(PWMMILI, 0);
+  //Serial.println(F("Configurando saida PWM"));
+  //setupPWM16(pwmBits);
+  //analogWrite16(PWMSEC, 0);
+  //analogWrite16(PWMMILI, 0);
 
-  Serial.println(F("Configurando DAC"));
-  DACSec.begin(0x60);
-  DACMili.begin(0x61);
-  DACSec.setVoltage(0, false);
-  DACMili.setVoltage(0, false);
+  if(!(DACSec.begin(0x60)&DACMili.begin(0x61)))
+  {
+    Serial.println(F("Falha ao iniciar DAC"));
+    funcReset();
+  }
+  {
+    Serial.println(F("DAC inicializado"));
+    DACSec.setVoltage(0, false);
+    DACMili.setVoltage(0, false);
+  }
 
   if (!ADS1X15.begin())
   {
-    ADS1X15.setGain(GAIN_TWOTHIRDS);
-    ADS1X15.setDataRate(RATE_ADS1015_1600SPS);
-    Serial.println(F("Falha ao iniciar ADC"));
+    Serial.println(F("Falha ao iniciar ADS"));
     funcReset();
   }
   else
-    Serial.println(F("ADC inicializado!"));
-  corretor = 0;
-
-  current_time = 0;
-  last_time = 0;
-  elapsed_time = 0;
-  volta_atual = 0;
+  {
+    ADS1X15.setGain(GAIN_TWOTHIRDS);
+    ADS1X15.setDataRate(RATE_ADS1015_1600SPS);
+    Serial.println(F("ADS inicializado"));
+    corretor = 0;
+  }
 }
 
 void loop()
 {
-  count_time();
-  //read_encoder();
-  // button.loop();
-  // checkPosition();
   if (teste == 1)
   {
     test_output();
   }
-  if (atualiza_tensao == 1)
+  else
   {
-    time_to_voltage();
-    read_ADS();
-    corrige_DAC();
+    //count_time();
+    read_encoder();
+    button.loop();
+    //checkPosition();
+    if (atualiza_tensao == 1)
+    {
+      time_to_voltage();
+      read_ADS();
+      corrige_DAC();
+      //time_to_pwm();
+    }
   }
 }
