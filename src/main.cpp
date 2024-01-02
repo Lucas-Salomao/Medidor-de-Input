@@ -75,7 +75,7 @@ struct Config
   char tempoMax[4];
   char pwm[3];
   char delay[6];
-  char precisao[3];
+  char precisao[4];
 };
 Config config;
 char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
@@ -108,8 +108,10 @@ volatile uint8_t atualiza_tensao = 0;
 volatile uint16_t adc_sec, adc_mili = 0;
 volatile float tensao_ads_sec, tensao_ads_mili = 0.0;
 volatile int16_t corretor = 0;
-volatile uint16_t precisao_bits_dac = 1;
+volatile uint16_t precisao_bits_dac = 16;
 volatile int16_t erroDAC=0;
+volatile int16_t corretor_mili=0;
+volatile uint8_t atualiza_tensao_mili=0;
 
 void (*funcReset)() = 0;
 void menu_back(void);
@@ -132,6 +134,7 @@ void read_ADS(void);
 void corrige_DAC(void);
 void atualiza_tempo(void);
 void inputCallbackPrecisao(char *value);
+void corrige_DACMili(void);
 
 MAIN_MENU(
     ITEM_SUBMENU("Monitorar", monitorMenu),
@@ -223,17 +226,17 @@ void time_to_pwm()
 
 void time_to_voltage()
 {
-  uint16_t t = mapeamento(tempo_segundos, 0, tempo_maximo, 50, 4050);
+  uint16_t t = mapeamento(tempo_segundos, 0, tempo_maximo, 0, 4095);
   DACSec.setVoltage(t + erroDAC + corretor, false);
   voltageSec = t * (5.0 / 4096);
-  t = mapeamento(tempo_milisegundos, 0, 999, 50, 4050);
-  DACMili.setVoltage(t + erroDAC + corretor, false);
+  t = mapeamento(tempo_milisegundos, 0, 999, 0, 4095);
+  DACMili.setVoltage(t + erroDAC + corretor_mili, false);
   voltageMili = t * (5.0 / 4096);
 
-  Serial.print(F("DAC-Tensao segundos:"));
-  Serial.println(voltageSec,6);
-  Serial.print(F("DAC-Tensao milisegundos:"));
-  Serial.println(voltageMili,6);
+  //Serial.print(F("DAC-Tensao segundos:"));
+  //Serial.println(voltageSec,6);
+  //Serial.print(F("DAC-Tensao milisegundos:"));
+  //Serial.println(voltageMili,6);
 }
 
 void test_output(void)
@@ -375,7 +378,7 @@ void load_configuration(void)
     strlcpy(config.tempoMax, "600", sizeof("600"));
     strlcpy(config.pwm, "11", sizeof("11"));
     strlcpy(config.delay, "5000", sizeof("5000"));
-    strlcpy(config.precisao, "01",sizeof("01"));
+    strlcpy(config.precisao, "16",sizeof("16"));
     save_configuration();
     load_configuration();
   }
@@ -392,29 +395,29 @@ void load_configuration(void)
     tempo_maximo = uint16_t(doc["tempoMax"]);
     tempo_atraso_teste = (unsigned long)(doc["delay"]);
     precisao_bits_dac = uint16_t(doc["precisao"]);
-    Serial.print(F("Voltas: "));
-    Serial.println(volta_configurada);
-    Serial.print(F("Resolucao PWM: "));
-    Serial.println(pwmBits);
-    Serial.print(F("Tempo maximo: "));
-    Serial.println(tempo_maximo);
-    Serial.print(F("Tempo delay teste: "));
-    Serial.println(tempo_atraso_teste);
-    Serial.print(F("Precisao: "));
-    Serial.println(precisao_bits_dac);
+    // Serial.print(F("Voltas: "));
+    // Serial.println(volta_configurada);
+    // Serial.print(F("Resolucao PWM: "));
+    // Serial.println(pwmBits);
+    // Serial.print(F("Tempo maximo: "));
+    // Serial.println(tempo_maximo);
+    // Serial.print(F("Tempo delay teste: "));
+    // Serial.println(tempo_atraso_teste);
+    // Serial.print(F("Precisao: "));
+    // Serial.println(precisao_bits_dac);
   }
 }
 
 void EEPROM_Clear(void)
 {
-  Serial.println(F("Apagando memoria EEPROM"));
+  //Serial.println(F("Apagando memoria EEPROM"));
   for (unsigned int i = 0; i < EEPROM.length(); i++)
   {
     EEPROM.write(i, 0);
   }
-  Serial.println(F("Memoria EEPROM apagada com sucesso"));
+  //Serial.println(F("Memoria EEPROM apagada com sucesso"));
   delay(100);
-  //funcReset();
+  funcReset();
 }
 
 long mapeamento(long x, long in_min, long in_max, long out_min, long out_max)
@@ -463,40 +466,72 @@ void read_ADS()
   tensao_ads_sec = ADS1X15.computeVolts(adc_sec);
   tensao_ads_mili = ADS1X15.computeVolts(adc_mili);
 
-  Serial.print(F("ADC-Tensao segundos:"));
-  Serial.println(tensao_ads_sec,6);
-  Serial.print(F("ADC-Tensao milisegundos:"));
-  Serial.println(tensao_ads_mili,6);
+  //Serial.print(F("ADC-Tensao segundos:"));
+  //Serial.println(tensao_ads_sec,6);
+  //Serial.print(F("ADC-Tensao milisegundos:"));
+  //Serial.println(tensao_ads_mili,6);
 }
 
-void corrige_DAC()
+void corrige_DAC(void)
 {
-  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) > (precisao_bits_dac * (6.144 / 4096))))
+  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) > (precisao_bits_dac * (6.144 / 65536))))
   {
     corretor++;
     atualiza_tensao = 1;
     return;
   }
-  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) <= (precisao_bits_dac * (6.144 / 4096))))
+  if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) <= (precisao_bits_dac * (6.144 / 65536))))
   {
     atualiza_tensao = 0;
-    Serial.print(F("Corretor:"));
-    Serial.println(corretor);
-    Serial.println();
+    //Serial.print(F("Corretor:"));
+    //Serial.println(corretor);
+    //Serial.println();
     return;
   }
-  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) < (-1 * (precisao_bits_dac * (6.144 / 4096)))))
+  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) < (-1 * (precisao_bits_dac * (6.144 / 65536)))))
   {
     corretor--;
     atualiza_tensao = 1;
     return;
   }
-  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) > (-1 * (precisao_bits_dac * (6.144 / 4096)))))
+  if (((voltageSec - tensao_ads_sec) < 0) & ((voltageSec - tensao_ads_sec) > (-1 * (precisao_bits_dac * (6.144 / 65536)))))
   {
     atualiza_tensao = 0;
-    Serial.print(F("Corretor:"));
-    Serial.println(corretor);
-    Serial.println();
+    //Serial.print(F("Corretor:"));
+    //Serial.println(corretor);
+    //Serial.println();
+    return;
+  }
+}
+
+void corrige_DACMili(void)
+{
+  if (((voltageMili - tensao_ads_mili) > 0) & ((voltageMili - tensao_ads_mili) > (precisao_bits_dac * (6.144 / 65536))))
+  {
+    corretor_mili++;
+    atualiza_tensao_mili = 1;
+    return;
+  }
+  if (((voltageMili - tensao_ads_mili) > 0) & ((voltageMili - tensao_ads_mili) <= (precisao_bits_dac * (6.144 / 65536))))
+  {
+    atualiza_tensao_mili = 0;
+    //Serial.print(F("Corretor:"));
+    //Serial.println(corretor);
+    //Serial.println();
+    return;
+  }
+  if (((voltageMili - tensao_ads_mili) < 0) & ((voltageMili - tensao_ads_mili) < (-1 * (precisao_bits_dac * (6.144 / 65536)))))
+  {
+    corretor_mili--;
+    atualiza_tensao_mili = 1;
+    return;
+  }
+  if (((voltageMili - tensao_ads_mili) < 0) & ((voltageMili - tensao_ads_mili) > (-1 * (precisao_bits_dac * (6.144 / 65536)))))
+  {
+    atualiza_tensao_mili = 0;
+    //Serial.print(F("Corretor:"));
+    //Serial.println(corretor);
+    //Serial.println();
     return;
   }
 }
@@ -525,11 +560,12 @@ void count_time(void)
     {
       tempo_segundos = elapsed_time / 1000;
       tempo_milisegundos = elapsed_time % 1000;
-      sprintf(msg_time, "Tempo total decorrido: %lu ms", elapsed_time);
-      Serial.println(msg_time);
+      //sprintf(msg_time, "Tempo total decorrido: %lu ms", elapsed_time);
+      //Serial.println(msg_time);
       elapsed_time = 0;
       volta_atual = 1;
       atualiza_tensao=1;
+      atualiza_tensao_mili=1;
       update_display();
     }
   }
@@ -551,7 +587,7 @@ void setup()
 {
   Serial.begin(1000000);
   //Serial.println(F("*********************************************************"));
-  Serial.println(F("Iniciando Medidor de Input Rinnai V1.0"));
+  //Serial.println(F("Iniciando Medidor de Input Rinnai V1.0"));
   //Serial.println(F("Desenvolvido por DK Solutions"));
   //Serial.println(F("Engenheiro Responsavel:Lucas Salomao"));
   //Serial.println(F("Contato:lucastadeusalomao@gmail.com"));
@@ -598,7 +634,7 @@ void setup()
   //Serial.println(F("Configurando botao do encoder"));
   button.begin(BUTTON_PIN);
   button.setClickHandler(handler);
-  // button.setLongClickHandler(handler);       // this will only be called upon release
+  button.setLongClickHandler(handler);       // this will only be called upon release
   // button.setLongClickDetectedHandler(handler); // this will only be called upon detection
   button.setDoubleClickHandler(handler);
   button.setTripleClickHandler(handler);
@@ -630,7 +666,7 @@ void setup()
   else
   {
     ADS1X15.setGain(GAIN_TWOTHIRDS);
-    ADS1X15.setDataRate(RATE_ADS1015_1600SPS);
+    ADS1X15.setDataRate(RATE_ADS1115_860SPS);
     //Serial.println(F("ADS inicializado"));
     corretor = 0;
   }
@@ -648,11 +684,12 @@ void loop()
     read_encoder();
     button.loop();
     //checkPosition();
-    if (atualiza_tensao == 1)
+    if ((atualiza_tensao == 1)|(atualiza_tensao_mili==1))
     {
       time_to_voltage();
       read_ADS();
       corrige_DAC();
+      corrige_DACMili();
       //time_to_pwm();
     }
   }
