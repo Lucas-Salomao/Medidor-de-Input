@@ -78,8 +78,8 @@ struct Config
   char precisao[3];
 };
 Config config;
-const char charset[] PROGMEM = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
-uint8_t charsetPosition;
+char charset[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
+uint8_t charsetPosition=0;
 volatile unsigned long int current_time = 0;
 volatile unsigned long int last_time = 0;
 volatile unsigned long int elapsed_time = 0;
