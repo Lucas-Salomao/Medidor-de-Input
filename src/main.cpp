@@ -75,6 +75,7 @@ struct Config
   char tempoMax[4];
   char pwm[3];
   char delay[6];
+  char precisao[3];
 };
 Config config;
 const char charset[] PROGMEM = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'};
@@ -108,7 +109,7 @@ volatile uint16_t adc_sec, adc_mili = 0;
 volatile float tensao_ads_sec, tensao_ads_mili = 0.0;
 volatile int16_t corretor = 0;
 volatile uint16_t precisao_bits_dac = 1;
-volatile int16_t erroDAC=30;
+volatile int16_t erroDAC=0;
 
 void (*funcReset)() = 0;
 void menu_back(void);
@@ -130,6 +131,7 @@ long mapeamento(long x, long in_min, long in_max, long out_min, long out_max);
 void read_ADS(void);
 void corrige_DAC(void);
 void atualiza_tempo(void);
+void inputCallbackPrecisao(char *value);
 
 MAIN_MENU(
     ITEM_SUBMENU("Monitorar", monitorMenu),
@@ -142,6 +144,7 @@ SUB_MENU(settingsMenu, mainMenu,
          ITEM_COMMAND("Apagar Memo", EEPROM_Clear),
          ITEM_TOGGLE("Teste", "ON", "OFF", rotina_teste),
          ITEM_INPUT("Delay", config.delay, inputCallbackDelay),
+         ITEM_INPUT("Precisao",config.precisao,inputCallbackPrecisao),
          ITEM_COMMAND("Voltar", menu_back));
 SUB_MENU(monitorMenu, mainMenu,
          ITEM_BASIC(str_segundos),
@@ -348,6 +351,7 @@ void save_configuration(void)
   doc["tempoMax"] = config.tempoMax;
   doc["pwm"] = config.pwm;
   doc["delay"] = config.delay;
+  doc["precisao"] = config.precisao;
 
   EepromStream eepromStream(CONFIG_ADDR, sizeof(doc));
   serializeJson(doc, eepromStream);
@@ -371,6 +375,7 @@ void load_configuration(void)
     strlcpy(config.tempoMax, "600", sizeof("600"));
     strlcpy(config.pwm, "11", sizeof("11"));
     strlcpy(config.delay, "5000", sizeof("5000"));
+    strlcpy(config.precisao, "01",sizeof("01"));
     save_configuration();
     load_configuration();
   }
@@ -381,10 +386,12 @@ void load_configuration(void)
     strlcpy(config.tempoMax, doc["tempoMax"], sizeof(config.tempoMax));
     strlcpy(config.pwm, doc["pwm"], sizeof(config.pwm));
     strlcpy(config.delay, doc["delay"], sizeof(config.delay));
-    volta_configurada = int(doc["voltas"]);
-    pwmBits = float(doc["pwm"]);
-    tempo_maximo = int(doc["tempoMax"]);
+    strlcpy(config.precisao,doc["precisao"],sizeof(config.precisao));
+    volta_configurada = uint8_t(doc["voltas"]);
+    pwmBits = uint16_t(doc["pwm"]);
+    tempo_maximo = uint16_t(doc["tempoMax"]);
     tempo_atraso_teste = (unsigned long)(doc["delay"]);
+    precisao_bits_dac = uint16_t(doc["precisao"]);
     Serial.print(F("Voltas: "));
     Serial.println(volta_configurada);
     Serial.print(F("Resolucao PWM: "));
@@ -393,6 +400,8 @@ void load_configuration(void)
     Serial.println(tempo_maximo);
     Serial.print(F("Tempo delay teste: "));
     Serial.println(tempo_atraso_teste);
+    Serial.print(F("Precisao: "));
+    Serial.println(precisao_bits_dac);
   }
 }
 
@@ -405,7 +414,7 @@ void EEPROM_Clear(void)
   }
   Serial.println(F("Memoria EEPROM apagada com sucesso"));
   delay(100);
-  funcReset();
+  //funcReset();
 }
 
 long mapeamento(long x, long in_min, long in_max, long out_min, long out_max)
@@ -651,4 +660,11 @@ void loop()
       //time_to_pwm();
     }
   }
+}
+
+void inputCallbackPrecisao(char *value)
+{
+  strcpy(config.precisao,value);
+  save_configuration();
+  precisao_bits_dac=atoi(value);
 }
