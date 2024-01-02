@@ -392,16 +392,16 @@ void load_configuration(void)
     tempo_maximo = uint16_t(doc["tempoMax"]);
     tempo_atraso_teste = (unsigned long)(doc["delay"]);
     precisao_bits_dac = uint16_t(doc["precisao"]);
-    // Serial.print(F("Voltas: "));
-    // Serial.println(volta_configurada);
-    // Serial.print(F("Resolucao PWM: "));
-    // Serial.println(pwmBits);
-    // Serial.print(F("Tempo maximo: "));
-    // Serial.println(tempo_maximo);
-    // Serial.print(F("Tempo delay teste: "));
-    // Serial.println(tempo_atraso_teste);
-    // Serial.print(F("Precisao: "));
-    // Serial.println(precisao_bits_dac);
+    Serial.print(F("Voltas: "));
+    Serial.println(volta_configurada);
+    Serial.print(F("Resolucao PWM: "));
+    Serial.println(pwmBits);
+    Serial.print(F("Tempo maximo: "));
+    Serial.println(tempo_maximo);
+    Serial.print(F("Tempo delay teste: "));
+    Serial.println(tempo_atraso_teste);
+    Serial.print(F("Precisao: "));
+    Serial.println(precisao_bits_dac);
   }
 }
 
