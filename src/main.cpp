@@ -60,8 +60,8 @@ LcdMenu menu(LCD_ROWS, LCD_COLS); // Construct the LcdMenu
 Button2 button;
 Adafruit_MCP4725 DACSec;
 Adafruit_MCP4725 DACMili;
-Adafruit_ADS1X15 ADS1X15;
-// Adafruit_ADS1115 ADS1X15;
+//Adafruit_ADS1X15 ADS1X15;
+Adafruit_ADS1115 ADS1X15;
 
 extern MenuItem *settingsMenu[];
 extern MenuItem *monitorMenu[];
