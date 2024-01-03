@@ -123,6 +123,7 @@ void inputCallbackVoltas(char *value);
 void inputCallbackTempoMax(char *value);
 void inputCallbackPWM(char *value);
 void inputCallbackDelay(char *value);
+void inputCallbackPrecisao(char *value);
 void save_configuration(void);
 void load_configuration(void);
 void EEPROM_Clear(void);
@@ -131,9 +132,8 @@ void test_output(void);
 void rotina_teste(uint16_t isOn);
 long mapeamento(long x, long in_min, long in_max, long out_min, long out_max);
 void read_ADS(void);
-void corrige_DAC(void);
+void corrige_DACSec(void);
 void atualiza_tempo(void);
-void inputCallbackPrecisao(char *value);
 void corrige_DACMili(void);
 
 MAIN_MENU(
@@ -337,6 +337,13 @@ void inputCallbackDelay(char *value)
   tempo_atraso_teste = atoi(value);
 }
 
+void inputCallbackPrecisao(char *value)
+{
+  strcpy(config.precisao,value);
+  save_configuration();
+  precisao_bits_dac=atoi(value);
+}
+
 void menu_back(void)
 {
   menu.back();
@@ -373,7 +380,7 @@ void load_configuration(void)
   if (error)
   {
     //Serial.print(F("Falha ao ler configuracao da EEPROM, usando configuracoes padrao e recriando o arquivo de configuracao\n\rError:"));
-    Serial.println(error.f_str());
+    //Serial.println(error.f_str());
     strlcpy(config.voltas, "01", sizeof("01"));
     strlcpy(config.tempoMax, "600", sizeof("600"));
     strlcpy(config.pwm, "11", sizeof("11"));
@@ -472,7 +479,7 @@ void read_ADS()
   //Serial.println(tensao_ads_mili,6);
 }
 
-void corrige_DAC(void)
+void corrige_DACSec(void)
 {
   if (((voltageSec - tensao_ads_sec) > 0) & ((voltageSec - tensao_ads_sec) > (precisao_bits_dac * (6.144 / 65536))))
   {
@@ -516,7 +523,7 @@ void corrige_DACMili(void)
   {
     atualiza_tensao_mili = 0;
     //Serial.print(F("Corretor:"));
-    //Serial.println(corretor);
+    //Serial.println(corretor_mili);
     //Serial.println();
     return;
   }
@@ -530,7 +537,7 @@ void corrige_DACMili(void)
   {
     atualiza_tensao_mili = 0;
     //Serial.print(F("Corretor:"));
-    //Serial.println(corretor);
+    //Serial.println(corretor_mili);
     //Serial.println();
     return;
   }
@@ -545,7 +552,7 @@ void count_time(void)
 {
   if(current_time!=last_time)
   {
-    char msg_time[60];
+    //char msg_time[60];
     if (last_time == 0)
     {
       last_time = current_time;
@@ -680,24 +687,14 @@ void loop()
   }
   else
   {
-    //count_time();
     read_encoder();
     button.loop();
-    //checkPosition();
     if ((atualiza_tensao == 1)|(atualiza_tensao_mili==1))
     {
       time_to_voltage();
       read_ADS();
-      corrige_DAC();
+      corrige_DACSec();
       corrige_DACMili();
-      //time_to_pwm();
     }
   }
-}
-
-void inputCallbackPrecisao(char *value)
-{
-  strcpy(config.precisao,value);
-  save_configuration();
-  precisao_bits_dac=atoi(value);
 }
