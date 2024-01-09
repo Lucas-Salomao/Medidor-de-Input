@@ -1,6 +1,6 @@
 # Dispositivo portátil de medição de input
 
-Este dispositivo é capaz de medir o tempo entre entre 2 pulsos de um sensor e converter esse tempo em uma tensão de 0-5V, dividido em 2 canais, um para segundos inteiros e outro para milisegundos.
+Este dispositivo é capaz de medir o tempo entre 2 pulsos de um sensor e converter esse tempo em uma tensão de 0-5V, dividido em 2 canais, um para segundos inteiros e outro para milisegundos.
 
 ## Características
 
