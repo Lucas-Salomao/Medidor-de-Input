@@ -44,7 +44,7 @@ Todas as bibliotecas utilizadas são listadas no arquivo [platfomio.ini](/platfo
 
 Ao energizar o equipamento está pronto para operação, apresentando a seguinte tela:
 
-<img src="/imgs/tela1.png">
+<img src="/imgs/tela1.PNG">
 
 Nesta tela temos as 2 opções disponíveis, Monitoramento e Configuração.
 
