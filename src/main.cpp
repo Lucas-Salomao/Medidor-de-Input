@@ -436,24 +436,33 @@ long mapeamento(long x, long in_min, long in_max, long out_min, long out_max)
 void update_display(void)
 {
   char tempBuffer[16];
+  char tempMsg[16];
   int tempNumber=0;
   float tempFloat=0;
 
   tempNumber=tempo_segundos;
-  itoa(tempNumber,tempBuffer,10);
-  strcpy(str_segundos, tempBuffer);
+  //itoa(tempNumber,tempBuffer,10);
+  //strcpy(str_segundos, tempBuffer);
+  sprintf(tempMsg,"T1:%d seg",tempNumber);
+  strcpy(str_segundos,tempMsg);
 
   tempNumber=tempo_milisegundos;
-  itoa(tempNumber,tempBuffer,10);
-  strcpy(str_milisegundos, tempBuffer);
+  //itoa(tempNumber,tempBuffer,10);
+  //strcpy(str_milisegundos, tempBuffer);
+  sprintf(tempMsg,"T2:%d mili",tempNumber);
+  strcpy(str_milisegundos,tempMsg);
 
   tempFloat=voltageSec;
   dtostrf(tempFloat, 4, 2, tempBuffer);
-  strcpy(str_tensao_segundos, tempBuffer);
+  //strcpy(str_tensao_segundos, tempBuffer);
+  sprintf(tempMsg,"V1:%s V",tempBuffer);
+  strcpy(str_tensao_segundos,tempMsg);
 
   tempFloat=voltageMili;
   dtostrf(tempFloat, 4, 2, tempBuffer);
-  strcpy(str_tensao_milisegundos, tempBuffer);
+  //strcpy(str_tensao_milisegundos, tempBuffer);
+  sprintf(tempMsg,"V2:%s V",tempBuffer);
+  strcpy(str_tensao_milisegundos,tempMsg);
 }
 
 void rotina_teste(uint16_t isOn)
