@@ -56,10 +56,10 @@ Rotacionando no sentido anti-horário, os valores são decrementados e o menu é
 
 O encoder rotativo também apresenta um botão. Quando pressionado o centro do encoder, esse botão é acionado. O Botão apresenta 3 funções:
 
-- Precionando 1 vez o comando ENTER é enviado.
-- Precionando 2 vezes o comando VOLTAR é enviado e o menu volta um nível acima.
-- Precionando 3 vezes o comando RESET é enviado e o dispositivo é reiniciado.
-- Precionando 1 vez e segurando pelo menos 500ms, o comando APAGAR é enviado e o valor atual selecionado no display é apagado.
+- Pressionando 1 vez o comando ENTER é enviado.
+- Prssionando 2 vezes o comando VOLTAR é enviado e o menu volta um nível acima.
+- Pressionando 3 vezes o comando RESET é enviado e o dispositivo é reiniciado.
+- Pressionando 1 vez e segurando pelo menos 500ms, o comando APAGAR é enviado e o valor atual selecionado no display é apagado.
 
 No menu Monitoramento podemos encontrar os valores de tempo medidos e os respectivos valores de tensão na saída, calculados.
 
@@ -71,7 +71,7 @@ No menu Configuração podemos configurar os seguintes parâmetros:
 
 - Quantidades de Voltas
 - Tempo Máximo de Amostragem
-- Precisção da Saída Analógica
+- Precisão da Saída Analógica
 - Habilitar Rotina de Teste
 - Tempo da Rotina de Teste
 - Apagar Memória EEPROM
@@ -90,4 +90,4 @@ No menu Configuração podemos configurar os seguintes parâmetros:
 
 ## Suporte
 
-Para suporte, mande um email para lucastadeusalomao@gmail.com.
+Para suporte, mande um e-mail para lucastadeusalomao@gmail.com.
