@@ -63,7 +63,7 @@ O encoder rotativo também apresenta um botão. Quando pressionado o centro do e
 
 No menu Monitoramento podemos encontrar os valores de tempo medidos e os respectivos valores de tensão na saída, calculados.
 
-<img src="/imgs/telamonitor1.PNG.png">
+<img src="/imgs/telamonitor1.PNG">
 
 <img src="/imgs/telamonitor2.PNG">
 
