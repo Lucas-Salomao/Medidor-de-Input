@@ -92,4 +92,4 @@ Para configurar algum valor de parâmetro, basta selecionar o parâmetro desejad
 
 ## Suporte
 
-Para suporte, mande um e-mail para lucastadeusalomao@gmail.com.
+Para suporte, mande um e-mail para contato@dksolutions.com.br.
