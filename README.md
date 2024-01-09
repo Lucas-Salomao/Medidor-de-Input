@@ -84,6 +84,8 @@ No menu Configuração podemos configurar os seguintes parâmetros:
 
 <img src="/imgs/telaconfig4.PNG">
 
+Para configurar algum valor de parâmetro, basta selecionar o parâmetro desejado e pressionar 1 vez o botão do encoder. O cursor piscará esperando o novo valor. Com o encoder, gire até o valor desejado. Para confirmar o valor, pressione 1 vez novamente o encoder. Caso necessite de mais um algarismo, escolha através do giro do encoder e confirme novamente pressionando 1 vez o encoder. Caso necessite apagar algum algarismo, pressione e segure por pelo menos 500ms o encoder e espere o algarismo ser apagado no display. Caso tenha terminado a configuração, pressione 2 vezes o botão do encoder para voltar ao menu de configuração.
+
 ## Licença
 
 [MIT](https://choosealicense.com/licenses/mit/)
