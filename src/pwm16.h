@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-void setupPWM16(int resolution);
+void setupPWM16(uint8_t bits);
 void analogWrite16(uint8_t pin, uint16_t val);
 
 #endif

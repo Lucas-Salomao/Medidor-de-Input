@@ -18,22 +18,42 @@
       "left": 82.4,
       "attrs": { "pins": "i2c" }
     },
-    { "type": "wokwi-ky-040", "id": "encoder1", "top": 20.9, "left": -164, "attrs": {} },
-    { "type": "wokwi-vcc", "id": "vcc1", "top": 19.96, "left": -9.6, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd1", "top": 96, "left": -10.2, "attrs": {} },
-    { "type": "wokwi-gnd", "id": "gnd2", "top": -230.4, "left": 9, "attrs": {} },
-    { "type": "wokwi-vcc", "id": "vcc2", "top": -316.04, "left": 19.2, "attrs": {} }
+    { "type": "wokwi-ky-040", "id": "encoder1", "top": 40.1, "left": -135.2, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 44.6,
+      "left": -259.2,
+      "attrs": { "color": "green" }
+    },
+    { "type": "wokwi-gnd", "id": "gnd1", "top": 115.2, "left": -192.6, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd2", "top": -240, "left": -0.6, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc1", "top": -325.64, "left": 9.6, "attrs": {} },
+    { "type": "wokwi-gnd", "id": "gnd3", "top": 115.2, "left": -10.2, "attrs": {} },
+    { "type": "wokwi-vcc", "id": "vcc2", "top": 19.96, "left": 28.8, "attrs": {} },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -44.05,
+      "left": -240,
+      "attrs": { "value": "10000" }
+    },
+    { "type": "wokwi-vcc", "id": "vcc3", "top": -95.24, "left": -259.2, "attrs": {} }
   ],
   "connections": [
     [ "lcd1:SCL", "nano:A5", "green", [ "h-38.4", "v115.5" ] ],
-    [ "nano:A4", "lcd1:SDA", "yellow", [ "h105.6", "v-134.6" ] ],
-    [ "nano:A1", "encoder1:SW", "violet", [ "h38.4", "v134.3" ] ],
-    [ "encoder1:DT", "nano:A3", "blue", [ "h28.8", "v-143.9", "h-48" ] ],
-    [ "vcc1:VCC", "encoder1:VCC", "red", [ "v9.6", "h-48" ] ],
-    [ "encoder1:GND", "gnd1:GND", "black", [ "v0.8", "h48" ] ],
-    [ "encoder1:CLK", "nano:A2", "orange", [ "h9.6", "v-124.8" ] ],
+    [ "nano:A4", "lcd1:SDA", "white", [ "h105.6", "v-134.6" ] ],
+    [ "encoder1:CLK", "nano:A3", "orange", [ "h28.8", "v-96" ] ],
+    [ "nano:A2", "encoder1:DT", "green", [ "h86.4", "v153.6" ] ],
+    [ "encoder1:SW", "nano:A1", "gold", [ "h19.2", "v-153.5" ] ],
+    [ "btn1:1.r", "nano:2", "orange", [ "v0", "h38.6", "v-201.6" ] ],
+    [ "lcd1:VCC", "vcc1:VCC", "red", [ "h0" ] ],
     [ "lcd1:GND", "gnd2:GND", "black", [ "h0" ] ],
-    [ "lcd1:VCC", "vcc2:VCC", "red", [ "h0" ] ]
+    [ "encoder1:GND", "gnd3:GND", "black", [ "h0" ] ],
+    [ "encoder1:VCC", "vcc2:VCC", "red", [ "h0" ] ],
+    [ "btn1:2.r", "gnd1:GND", "black", [ "h0" ] ],
+    [ "r1:2", "btn1:1.r", "orange", [ "v0", "h27.6", "v0" ] ],
+    [ "r1:1", "vcc3:VCC", "red", [ "v0", "h-9.6" ] ]
   ],
   "dependencies": {}
 }
